@@ -15,6 +15,7 @@
     "preview": "vite preview",
     "electron:dev": "concurrently -k \"vite\" \"wait-on http://localhost:5173 && electron .\"",
     "electron:build": "npm run build && electron-builder --publish never",
+    "electron:deploy": "npm version patch && git push --follow-tags",
     "electron:release": "npm run build && electron-builder --publish always"
   },
   "dependencies": {
