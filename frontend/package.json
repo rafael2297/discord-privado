@@ -64,7 +64,7 @@
       {
         "provider": "github",
         "owner": "rafael2297",
-        "repo": "discord-privado-releases",
+        "repo": "discord-privado",
         "releaseType": "release"
       }
     ]

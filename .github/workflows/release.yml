@@ -6,10 +6,8 @@ on:
       - "v*"
   workflow_dispatch:
 
-# O token usado para publicar vai para OUTRO repositório. Por isso o workflow
-# usa o segredo RELEASES_TOKEN, em vez do GITHUB_TOKEN automático desta ação.
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   release:
@@ -58,4 +56,4 @@ jobs:
         working-directory: frontend
         run: npm run electron:release
         env:
-          GH_TOKEN: ${{ secrets.RELEASES_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
