@@ -38,7 +38,12 @@ execFileSync("git", ["tag", `v${version}`], {
   stdio: "inherit"
 });
 
-execFileSync("git", ["push", "origin", "main", "--follow-tags"], {
+execFileSync("git", ["push", "origin", "main"], {
+  cwd: root,
+  stdio: "inherit"
+});
+
+execFileSync("git", ["push", "origin", `v${version}`], {
   cwd: root,
   stdio: "inherit"
 });
