@@ -21,3 +21,6 @@ livekit-temp/
 *.log
 .DS_Store
 Thumbs.db
+
+# Contexto interno do projeto (não deve ir pro GitHub)
+PROJECT_CONTEXT.md
