@@ -36,4 +36,4 @@ npx postject "build\discord-privado-backend.exe" NODE_SEA_BLOB "build\sea-prep.b
 Write-Host "`nPronto: build\discord-privado-backend.exe" -ForegroundColor Green
 Write-Host "Teste rodando: .\build\discord-privado-backend.exe" -ForegroundColor Green
 Write-Host "(precisa de um arquivo .env na mesma pasta que o .exe, com as mesmas" -ForegroundColor Yellow
-Write-Host "variáveis do backend/.env.example — copie ele também pra pasta build\)" -ForegroundColor Yellow
+Write-Host "Variaveis do backend/.env.example - copie ele tambem pra pasta build" -ForegroundColor Yellow
