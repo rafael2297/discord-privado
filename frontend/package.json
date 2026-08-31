@@ -1,0 +1,72 @@
+{
+  "name": "discord-privado-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "electron/main.cjs",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rafael2297/discord-privado.git"
+  },
+  "scripts": {
+    "dev": "vite",
+    "dev:lan": "vite --host",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "electron:dev": "concurrently -k \"vite\" \"wait-on http://localhost:5173 && electron .\"",
+    "electron:build": "npm run build && electron-builder --publish never",
+    "electron:release": "npm run build && electron-builder --publish always"
+  },
+  "dependencies": {
+    "@livekit/components-react": "^2.6.0",
+    "@livekit/components-styles": "^1.1.4",
+    "electron-updater": "^6.3.9",
+    "livekit-client": "^2.7.0",
+    "lucide-react": "^0.451.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "concurrently": "^9.0.1",
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.1",
+    "wait-on": "^8.0.1"
+  },
+  "build": {
+    "appId": "com.discordprivado.app",
+    "productName": "Discord Privado",
+    "directories": {
+      "output": "release"
+    },
+    "files": ["dist/**/*", "electron/**/*"],
+    "extraResources": [
+      { "from": "resources/discord-privado-backend.exe", "to": "discord-privado-backend.exe" },
+      { "from": "resources/livekit-server.exe", "to": "livekit-server.exe" }
+    ],
+    "win": {
+      "target": ["nsis"],
+      "icon": "build-icons/icon.ico"
+    },
+    "mac": {
+      "target": ["dmg"],
+      "icon": "build-icons/icon.icns"
+    },
+    "linux": {
+      "target": ["AppImage"],
+      "icon": "build-icons/icon.png"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "rafael2297",
+        "repo": "discord-privado-releases",
+        "releaseType": "release"
+      }
+    ]
+  }
+}

@@ -1,0 +1,23 @@
+# Dependências e artefatos gerados
+**/node_modules/
+**/dist/
+**/build/
+frontend/release/
+frontend/resources/*.exe
+frontend/resources/*.zip
+
+# Dados e segredos locais
+**/.env
+!**/.env.example
+**/*.db
+
+# Binários e downloads locais
+livekit-server.exe
+livekit-server-download.zip
+livekit-temp/
+
+# Cache e arquivos transitórios
+**/*.tsbuildinfo
+*.log
+.DS_Store
+Thumbs.db

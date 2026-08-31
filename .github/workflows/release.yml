@@ -1,0 +1,61 @@
+name: Publicar instalador Windows
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+# O token usado para publicar vai para OUTRO repositório. Por isso o workflow
+# usa o segredo RELEASES_TOKEN, em vez do GITHUB_TOKEN automático desta ação.
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Instalar dependências do backend
+        working-directory: backend
+        run: npm ci
+
+      - name: Gerar backend executável
+        working-directory: backend
+        shell: powershell
+        run: .\build-exe.ps1
+
+      - name: Baixar LiveKit para Windows
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $headers = @{ "User-Agent" = "discord-privado-release" }
+          $release = Invoke-RestMethod -Uri "https://api.github.com/repos/livekit/livekit-server/releases/latest" -Headers $headers
+          $asset = $release.assets | Where-Object { $_.name -match "windows_amd64\.zip$" } | Select-Object -First 1
+          if (-not $asset) { throw "Asset Windows amd64 do LiveKit não encontrado." }
+          Invoke-WebRequest -Uri $asset.browser_download_url -OutFile "livekit-server.zip"
+          Expand-Archive -Path "livekit-server.zip" -DestinationPath "livekit-server-temp" -Force
+          Copy-Item "livekit-server-temp\livekit-server.exe" "livekit-server.exe" -Force
+
+      - name: Instalar dependências do frontend
+        working-directory: frontend
+        run: npm ci
+
+      - name: Preparar processos auxiliares
+        working-directory: frontend
+        shell: powershell
+        run: .\prepare-resources.ps1
+
+      - name: Gerar e publicar release
+        working-directory: frontend
+        run: npm run electron:release
+        env:
+          GH_TOKEN: ${{ secrets.RELEASES_TOKEN }}

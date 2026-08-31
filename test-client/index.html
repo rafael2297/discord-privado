@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Discord Privado — Teste de Call</title>
+<style>
+  :root {
+    --bg: #1e1f22;
+    --panel: #2b2d31;
+    --accent: #5865f2;
+    --accent-hover: #4752c4;
+    --danger: #da373c;
+    --text: #dbdee1;
+    --text-dim: #949ba4;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    padding: 16px 24px;
+    background: var(--panel);
+    border-bottom: 1px solid #1a1b1e;
+  }
+  header h1 { margin: 0 0 4px; font-size: 18px; }
+  header p { margin: 0; color: var(--text-dim); font-size: 13px; }
+
+  /* ---- Tela de login/cadastro ---- */
+  #authScreen {
+    max-width: 380px;
+    margin: 48px auto;
+    background: var(--panel);
+    padding: 24px;
+    border-radius: 8px;
+  }
+  #authScreen h2 { margin-top: 0; font-size: 16px; }
+  #authScreen label { display: block; font-size: 12px; color: var(--text-dim); margin: 12px 0 4px; }
+  #authScreen input {
+    width: 100%;
+    background: #1e1f22;
+    border: 1px solid #3a3c41;
+    color: var(--text);
+    padding: 8px 10px;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  #authScreen .row { display: flex; gap: 8px; margin-top: 16px; }
+  #authScreen button {
+    flex: 1;
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  #authScreen button:hover { background: var(--accent-hover); }
+  #authScreen button.secondary { background: #3a3c41; }
+  #authScreen button.secondary:hover { background: #46484e; }
+  #authError { color: var(--danger); font-size: 13px; margin-top: 10px; min-height: 16px; }
+
+  /* ---- Tela de call ---- */
+  #callScreen { display: none; flex: 1; flex-direction: column; }
+
+  .controls {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 16px 24px;
+    background: var(--panel);
+    border-bottom: 1px solid #1a1b1e;
+    align-items: center;
+  }
+  .controls input {
+    background: #1e1f22;
+    border: 1px solid #3a3c41;
+    color: var(--text);
+    padding: 8px 10px;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  .controls button {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .controls button:hover { background: var(--accent-hover); }
+  .controls button.danger { background: var(--danger); }
+  .controls button.danger:hover { background: #a92d31; }
+  .controls button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .whoami { margin-left: auto; font-size: 13px; color: var(--text-dim); }
+
+  #status {
+    padding: 8px 24px;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  #status.connected { color: #23a55a; }
+  #status.error { color: var(--danger); }
+
+  #grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+    padding: 16px 24px;
+    align-content: start;
+  }
+  .tile {
+    background: var(--panel);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    aspect-ratio: 16 / 9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .tile video { width: 100%; height: 100%; object-fit: cover; }
+  .tile .label {
+    position: absolute;
+    bottom: 6px;
+    left: 8px;
+    font-size: 12px;
+    background: rgba(0,0,0,0.55);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .tile.speaking { outline: 3px solid #23a55a; }
+  .tile.screen-share { grid-column: span 2; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🎧 Discord Privado — Teste de Call</h1>
+  <p>Login/cadastro pelo backend. O token do LiveKit é gerado automaticamente — nada de copiar/colar manual.</p>
+</header>
+
+<div id="authScreen">
+  <h2>Entrar</h2>
+  <label>URL do backend</label>
+  <input id="backendUrl" value="http://localhost:3000" />
+  <label>Seu nome</label>
+  <input id="username" placeholder="Como os outros vão te ver" />
+  <div class="row">
+    <button id="btnLogin">Entrar</button>
+  </div>
+  <div id="authError"></div>
+</div>
+
+<div id="callScreen">
+  <div class="controls">
+    <span id="roomLabel"></span>
+    <button id="btnJoinCall">🎙️ Entrar no canal de voz</button>
+    <button id="btnMute" disabled>🎤 Mutar</button>
+    <button id="btnCam" disabled>📷 Câmera</button>
+    <button id="btnScreen" disabled>🖥️ Compartilhar tela</button>
+    <button id="btnLeave" class="danger" disabled>Sair</button>
+    <span class="whoami" id="whoami"></span>
+  </div>
+  <div id="status">Desconectado.</div>
+  <div id="grid"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js"></script>
+<script>
+const { Room, RoomEvent, Track, createLocalTracks } = LivekitClient;
+
+const $ = (id) => document.getElementById(id);
+
+// Projeto tem só um canal de voz fixo (ver seção 11 do PROJECT_CONTEXT.md).
+const VOICE_ROOM_NAME = "geral";
+
+let authToken = null;
+let currentUsername = null;
+let room;
+let micEnabled = true;
+let camEnabled = false;
+
+// ---------- Identificação (sem senha/conta) ----------
+
+async function identify() {
+  const backendUrl = $("backendUrl").value.trim().replace(/\/$/, "");
+  const username = $("username").value.trim();
+  $("authError").textContent = "";
+
+  if (!backendUrl || username.length < 2) {
+    $("authError").textContent = "Preencha URL do backend e um nome com pelo menos 2 caracteres.";
+    return;
+  }
+
+  try {
+    const res = await fetch(`${backendUrl}/auth/identify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      $("authError").textContent = data.error || `Erro ${res.status}`;
+      return;
+    }
+    authToken = data.token;
+    currentUsername = data.user.username;
+    enterCallScreen();
+  } catch (err) {
+    console.error(err);
+    $("authError").textContent = "Não foi possível conectar ao backend. Confira a URL.";
+  }
+}
+
+$("btnLogin").addEventListener("click", identify);
+
+function enterCallScreen() {
+  $("authScreen").style.display = "none";
+  $("callScreen").style.display = "flex";
+  $("whoami").textContent = `Logado como ${currentUsername}`;
+  $("roomLabel").textContent = `Canal: ${VOICE_ROOM_NAME}`;
+}
+
+// ---------- Call (LiveKit) ----------
+
+function tileIdFor(participant, source) {
+  return `tile-${participant.identity}-${source}`;
+}
+
+function ensureTile(participant, source, isScreenShare) {
+  const id = tileIdFor(participant, source);
+  let tile = document.getElementById(id);
+  if (!tile) {
+    tile = document.createElement("div");
+    tile.id = id;
+    tile.className = "tile" + (isScreenShare ? " screen-share" : "");
+    const label = document.createElement("div");
+    label.className = "label";
+    label.textContent = participant.identity + (isScreenShare ? " (tela)" : "");
+    tile.appendChild(label);
+    $("grid").appendChild(tile);
+  }
+  return tile;
+}
+
+function attachTrack(participant, publication) {
+  const track = publication.track;
+  if (!track) return;
+  const isScreenShare = publication.source === Track.Source.ScreenShare;
+  const tile = ensureTile(participant, publication.source, isScreenShare);
+
+  if (track.kind === "video") {
+    const existingVideo = tile.querySelector("video");
+    if (existingVideo) existingVideo.remove();
+    const el = track.attach();
+    tile.insertBefore(el, tile.firstChild);
+  } else if (track.kind === "audio") {
+    if (participant.isLocal) return;
+    const el = track.attach();
+    el.autoplay = true;
+    document.body.appendChild(el);
+  }
+}
+
+function removeTrack(participant, publication) {
+  const id = tileIdFor(participant, publication.source);
+  const tile = document.getElementById(id);
+  if (tile && publication.track && publication.track.kind === "video") {
+    tile.remove();
+  }
+}
+
+function setStatus(text, cls) {
+  const el = $("status");
+  el.textContent = text;
+  el.className = cls || "";
+}
+
+function toggleControls(connected) {
+  $("btnJoinCall").disabled = connected;
+  $("btnMute").disabled = !connected;
+  $("btnCam").disabled = !connected;
+  $("btnScreen").disabled = !connected;
+  $("btnLeave").disabled = !connected;
+}
+
+async function joinCall() {
+  const backendUrl = $("backendUrl").value.trim().replace(/\/$/, "");
+
+  try {
+    setStatus("Pedindo token pro backend...", "");
+    const res = await fetch(`${backendUrl}/rooms/${encodeURIComponent(VOICE_ROOM_NAME)}/join-token`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setStatus("Erro ao pedir token: " + (data.error || res.status), "error");
+      return;
+    }
+
+    room = new Room({ adaptiveStream: true, dynacast: true });
+
+    room
+      .on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
+        attachTrack(participant, publication);
+      })
+      .on(RoomEvent.TrackUnsubscribed, (track, publication, participant) => {
+        removeTrack(participant, publication);
+      })
+      .on(RoomEvent.ParticipantDisconnected, (participant) => {
+        document.querySelectorAll(`[id^="tile-${participant.identity}-"]`).forEach((el) => el.remove());
+      })
+      .on(RoomEvent.ActiveSpeakersChanged, (speakers) => {
+        document.querySelectorAll(".tile").forEach((t) => t.classList.remove("speaking"));
+        speakers.forEach((p) => {
+          document.querySelectorAll(`[id^="tile-${p.identity}-"]`).forEach((t) => t.classList.add("speaking"));
+        });
+      })
+      .on(RoomEvent.Disconnected, () => {
+        setStatus("Desconectado.", "");
+        toggleControls(false);
+      });
+
+    setStatus("Conectando ao LiveKit...", "");
+    await room.connect(data.url, data.token);
+
+    const tracks = await createLocalTracks({ audio: true, video: false });
+    for (const t of tracks) {
+      await room.localParticipant.publishTrack(t);
+    }
+    ensureTile(room.localParticipant, Track.Source.Microphone, false).querySelector(".label").textContent =
+      room.localParticipant.identity + " (você)";
+
+    setStatus(`Conectado à sala "${room.name}" como "${room.localParticipant.identity}"`, "connected");
+    toggleControls(true);
+  } catch (err) {
+    console.error(err);
+    setStatus("Erro ao conectar: " + err.message, "error");
+  }
+}
+
+async function toggleMute() {
+  micEnabled = !micEnabled;
+  await room.localParticipant.setMicrophoneEnabled(micEnabled);
+  $("btnMute").textContent = micEnabled ? "🎤 Mutar" : "🔇 Desmutar";
+}
+
+async function toggleCam() {
+  camEnabled = !camEnabled;
+  await room.localParticipant.setCameraEnabled(camEnabled);
+  $("btnCam").textContent = camEnabled ? "📷 Desligar câmera" : "📷 Câmera";
+}
+
+async function toggleScreenShare() {
+  const enabled = !room.localParticipant.isScreenShareEnabled;
+  try {
+    await room.localParticipant.setScreenShareEnabled(
+      enabled,
+      {
+        resolution: { width: 1920, height: 1080, frameRate: 30 },
+        contentHint: "motion",
+      },
+      {
+        videoEncoding: { maxBitrate: 4_000_000, maxFramerate: 30 },
+        simulcast: false,
+      }
+    );
+    $("btnScreen").textContent = enabled ? "🛑 Parar compartilhamento" : "🖥️ Compartilhar tela";
+  } catch (err) {
+    console.warn("Usuário cancelou ou erro ao compartilhar tela:", err);
+  }
+}
+
+function leave() {
+  if (room) room.disconnect();
+  $("grid").innerHTML = "";
+}
+
+$("btnJoinCall").addEventListener("click", joinCall);
+$("btnMute").addEventListener("click", toggleMute);
+$("btnCam").addEventListener("click", toggleCam);
+$("btnScreen").addEventListener("click", toggleScreenShare);
+$("btnLeave").addEventListener("click", leave);
+</script>
+
+</body>
+</html>
