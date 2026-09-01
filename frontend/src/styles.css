@@ -515,7 +515,50 @@ body {
   margin: 0 0 8px;
 }
 
-/* ---- Soundboard ---- */
+/* Aviso de atualização disponível — canto superior direito, sempre por
+   cima de tudo (funciona tanto na tela de login quanto dentro do app). */
+
+.update-banner {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--online);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.update-banner.downloading {
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+  cursor: default;
+}
+
+.update-banner.ready:hover {
+  filter: brightness(1.1);
+}
+
+.update-banner-spin {
+  animation: update-banner-spin 1s linear infinite;
+}
+
+@keyframes update-banner-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 /* Painel flutuante do soundboard — ancorado perto de onde o botão fica
    (canto inferior esquerdo, acima da barra de voz/usuário), igual ao

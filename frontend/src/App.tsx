@@ -2,6 +2,7 @@ import { useState } from "react";
 import StartScreen from "./components/StartScreen";
 import LoginScreen from "./components/LoginScreen";
 import Workspace from "./components/Workspace";
+import UpdateBanner from "./components/UpdateBanner";
 import { AuthUser } from "./api";
 import { isEnvElectron } from "./host";
 
@@ -51,6 +52,7 @@ export default function App() {
   if (!session) {
     return (
       <div className="app-shell">
+        <UpdateBanner />
         <header>
           <h1>🎧 Discord Privado</h1>
         </header>
@@ -76,11 +78,14 @@ export default function App() {
   }
 
   return (
-    <Workspace
-      backendUrl={session.backendUrl}
-      authToken={session.token}
-      username={session.user.username}
-      onLogout={handleLogout}
-    />
+    <>
+      <UpdateBanner />
+      <Workspace
+        backendUrl={session.backendUrl}
+        authToken={session.token}
+        username={session.user.username}
+        onLogout={handleLogout}
+      />
+    </>
   );
 }

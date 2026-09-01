@@ -19,7 +19,7 @@ function getResourcePath(name) {
   return path.join(base, name);
 }
 
-function sendLog(line) {
+function sendToRenderer(channel, payload) {
   // Bug corrigido: ao fechar o app enquanto backend/LiveKit ainda estão de
   // pé, eles mandam umas últimas linhas de stdout/stderr DEPOIS da janela
   // já ter sido destruída (window-all-closed roda antes dos processos
@@ -28,7 +28,11 @@ function sendLog(line) {
   // com um popup de erro, mesmo o app já tendo fechado direito por baixo.
   if (!mainWindow || mainWindow.isDestroyed()) return;
   if (!mainWindow.webContents || mainWindow.webContents.isDestroyed()) return;
-  mainWindow.webContents.send("host-log", String(line));
+  mainWindow.webContents.send(channel, payload);
+}
+
+function sendLog(line) {
+  sendToRenderer("host-log", String(line));
 }
 
 function createWindow() {
@@ -183,6 +187,14 @@ ipcMain.handle("focus-window", () => {
   mainWindow.focus();
 });
 
+// --- IPC: atualização (chamado pelo botão "Nova versão" no React) ---
+
+ipcMain.handle("install-update", () => {
+  // Fecha o app e instala a versão já baixada — o instalador NSIS reabre
+  // o app sozinho no final.
+  autoUpdater.quitAndInstall();
+});
+
 app.whenReady().then(() => {
   createWindow();
 
@@ -202,10 +214,26 @@ app.whenReady().then(() => {
     });
   });
 
-  // Checa atualização no GitHub Releases sozinho, ao abrir. electron-updater
-  // já cuida de baixar+notificar+instalar (equivalente ao que fazíamos com
-  // tauri-plugin-updater).
-  autoUpdater.checkForUpdatesAndNotify().catch((err) => {
+  // Checa atualização no GitHub Releases sozinho, ao abrir. Em vez de
+  // usar checkForUpdatesAndNotify() (que mostra uma notificação nativa
+  // do Windows), escutamos os eventos e mandamos pro React — assim o
+  // aviso é um elemento dentro do próprio app (seta verde "Nova versão",
+  // ver UpdateBanner.tsx), não uma notificação do sistema.
+  autoUpdater.on("update-available", (info) => {
+    sendLog(`Atualização disponível: v${info.version} — baixando em segundo plano...`);
+    sendToRenderer("update-status", { status: "available", version: info.version });
+  });
+
+  autoUpdater.on("update-downloaded", (info) => {
+    sendLog(`Atualização v${info.version} baixada — pronta pra instalar.`);
+    sendToRenderer("update-status", { status: "downloaded", version: info.version });
+  });
+
+  autoUpdater.on("error", (err) => {
+    console.debug("Erro checando/baixando atualização (normal em dev, sem release publicado ainda):", err);
+  });
+
+  autoUpdater.checkForUpdates().catch((err) => {
     console.debug("Checagem de atualização falhou (normal em dev, sem release publicado ainda):", err);
   });
 

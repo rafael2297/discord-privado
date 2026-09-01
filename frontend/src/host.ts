@@ -16,6 +16,13 @@ interface ElectronAPI {
   startLiveKit: (nodeIp: string) => Promise<void>;
   stopLiveKit: () => Promise<void>;
   onHostLog: (callback: (line: string) => void) => () => void;
+  onUpdateStatus: (callback: (status: UpdateStatus) => void) => () => void;
+  installUpdate: () => Promise<void>;
+}
+
+export interface UpdateStatus {
+  status: "available" | "downloaded";
+  version: string;
 }
 
 function getElectronAPI(): ElectronAPI | null {
@@ -74,4 +81,20 @@ export async function startLiveKitSidecar(
 
 export async function stopLiveKitSidecar(): Promise<void> {
   await getElectronAPI()?.stopLiveKit();
+}
+
+/**
+ * Escuta os avisos de atualização (ver UpdateBanner.tsx). Fora do
+ * Electron (navegador, npm run dev) não faz nada — não existe checagem
+ * de atualização fora do app instalado.
+ */
+export function onUpdateStatus(callback: (status: UpdateStatus) => void): () => void {
+  const api = getElectronAPI();
+  if (!api) return () => {};
+  return api.onUpdateStatus(callback);
+}
+
+/** Fecha o app e instala a versão já baixada (o instalador reabre sozinho). */
+export async function installUpdate(): Promise<void> {
+  await getElectronAPI()?.installUpdate();
 }

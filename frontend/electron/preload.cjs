@@ -17,4 +17,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
     // se o componente re-registrar em outra tentativa de hospedar.
     return () => ipcRenderer.removeListener("host-log", listener);
   },
+  onUpdateStatus: (callback) => {
+    const listener = (_event, status) => callback(status);
+    ipcRenderer.on("update-status", listener);
+    return () => ipcRenderer.removeListener("update-status", listener);
+  },
+  installUpdate: () => ipcRenderer.invoke("install-update"),
 });
