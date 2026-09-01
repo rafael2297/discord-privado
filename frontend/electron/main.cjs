@@ -20,7 +20,15 @@ function getResourcePath(name) {
 }
 
 function sendLog(line) {
-  mainWindow?.webContents.send("host-log", String(line));
+  // Bug corrigido: ao fechar o app enquanto backend/LiveKit ainda estão de
+  // pé, eles mandam umas últimas linhas de stdout/stderr DEPOIS da janela
+  // já ter sido destruída (window-all-closed roda antes dos processos
+  // filhos morrerem de vez) — sem essa checagem, .webContents.send()
+  // lançava "Object has been destroyed" e derrubava o processo principal
+  // com um popup de erro, mesmo o app já tendo fechado direito por baixo.
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  if (!mainWindow.webContents || mainWindow.webContents.isDestroyed()) return;
+  mainWindow.webContents.send("host-log", String(line));
 }
 
 function createWindow() {
@@ -36,6 +44,10 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
     },
+  });
+
+  mainWindow.on("closed", () => {
+    mainWindow = null;
   });
 
   if (isDev) {

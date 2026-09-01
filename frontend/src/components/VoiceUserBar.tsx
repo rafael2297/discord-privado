@@ -1,19 +1,21 @@
 import { useRef, useState } from "react";
 import { useLocalParticipant, useRoomContext } from "@livekit/components-react";
-import { Mic, MicOff, Video, VideoOff, ScreenShare, ScreenShareOff, PhoneOff } from "lucide-react";
+import { Video, VideoOff, ScreenShare, ScreenShareOff, PhoneOff, Music4 } from "lucide-react";
 import { isEnvElectron } from "../host";
 import ScreenSharePicker from "./ScreenSharePicker";
+import SoundboardPanel from "./SoundboardPanel";
 
-export default function VoiceUserBar() {
+interface Props {
+  backendUrl: string;
+  authToken: string;
+}
+
+export default function VoiceUserBar({ backendUrl, authToken }: Props) {
   const room = useRoomContext();
-  const { localParticipant, isMicrophoneEnabled, isCameraEnabled, isScreenShareEnabled } =
-    useLocalParticipant();
+  const { localParticipant, isCameraEnabled, isScreenShareEnabled } = useLocalParticipant();
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [soundboardOpen, setSoundboardOpen] = useState(false);
   const pickerResolveRef = useRef<((sourceId: string | null) => void) | null>(null);
-
-  async function toggleMic() {
-    await localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled);
-  }
 
   async function toggleCam() {
     await localParticipant.setCameraEnabled(!isCameraEnabled);
@@ -79,41 +81,47 @@ export default function VoiceUserBar() {
 
   return (
     <div className="voice-status-bar">
-      <div className="voice-status-info">
-        <span className="voice-connected-dot" />
-        <div>
-          <div className="voice-status-title">Voz conectada</div>
-          <div className="voice-status-sub"># geral</div>
+      <div className="voice-status-top">
+        <div className="voice-status-info">
+          <span className="voice-connected-dot" />
+          <div>
+            <div className="voice-status-title">Voz conectada</div>
+            <div className="voice-status-sub"># geral</div>
+          </div>
         </div>
-      </div>
-      <div className="voice-status-actions">
-        <button
-          className={`icon-btn ${!isMicrophoneEnabled ? "muted" : ""}`}
-          onClick={toggleMic}
-          title={isMicrophoneEnabled ? "Mutar" : "Desmutar"}
-        >
-          {isMicrophoneEnabled ? <Mic size={18} /> : <MicOff size={18} />}
+        <button className="icon-btn danger" onClick={leave} title="Desconectar">
+          <PhoneOff size={18} />
         </button>
+      </div>
+
+      <div className="voice-status-features">
         <button
-          className={`icon-btn ${isCameraEnabled ? "on" : ""}`}
+          className={`voice-feature-btn ${isCameraEnabled ? "on" : ""}`}
           onClick={toggleCam}
           title="Câmera"
         >
           {isCameraEnabled ? <Video size={18} /> : <VideoOff size={18} />}
         </button>
         <button
-          className={`icon-btn ${isScreenShareEnabled ? "on" : ""}`}
+          className={`voice-feature-btn ${isScreenShareEnabled ? "on" : ""}`}
           onClick={toggleScreenShare}
           title="Compartilhar tela"
         >
           {isScreenShareEnabled ? <ScreenShareOff size={18} /> : <ScreenShare size={18} />}
         </button>
-        <button className="icon-btn danger" onClick={leave} title="Desconectar">
-          <PhoneOff size={18} />
+        <button className="voice-feature-btn" onClick={() => setSoundboardOpen(true)} title="Soundboard">
+          <Music4 size={18} />
         </button>
       </div>
 
       {pickerOpen && <ScreenSharePicker onPick={handlePick} />}
+      {soundboardOpen && (
+        <SoundboardPanel
+          onClose={() => setSoundboardOpen(false)}
+          backendUrl={backendUrl}
+          authToken={authToken}
+        />
+      )}
     </div>
   );
 }

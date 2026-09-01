@@ -1,6 +1,7 @@
 import { DatabaseSync } from "node:sqlite";
 import path from "path";
 import fs from "fs";
+import { getDataDir } from "./paths";
 
 // node:sqlite é embutido no próprio Node.js (>=22.5) — sem módulo nativo
 // externo pra compilar. Isso é essencial pra poder empacotar o backend num
@@ -10,8 +11,9 @@ import fs from "fs";
 // impede o uso.
 //
 // DB_PATH configurável (usado no Docker, ver docker-compose.yml). Fora do
-// Docker/exe empacotado, cai num arquivo local em backend/data/chat.db.
-const DB_PATH = process.env.DB_PATH || path.join(__dirname, "..", "data", "chat.db");
+// Docker/exe empacotado, fica na pasta de dados persistente do usuário
+// (ver paths.ts) — NÃO do lado do .exe, pra sobreviver a atualizações.
+const DB_PATH = process.env.DB_PATH || path.join(getDataDir(), "chat.db");
 
 fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
 
@@ -23,5 +25,32 @@ db.exec(`
     username TEXT NOT NULL,
     text TEXT NOT NULL,
     timestamp INTEGER NOT NULL
+  );
+`);
+
+// Soundboard: cada som é um arquivo em backend/data/sounds/ + esta linha
+// com os metadados. Sem limite de quantidade nem de duração — só um teto
+// de tamanho de arquivo por segurança (ver MAX_SOUND_BYTES em sounds.ts).
+db.exec(`
+  CREATE TABLE IF NOT EXISTS sounds (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    filename TEXT NOT NULL,
+    added_by TEXT NOT NULL,
+    created_at INTEGER NOT NULL
+  );
+`);
+
+// Emojis personalizados: cada um é uma imagem em backend/data/emojis/ +
+// esta linha. "code" é o atalho digitado no chat (ex: :buzina:) e
+// precisa ser único. Sem limite de quantidade — só um teto de tamanho de
+// arquivo por segurança (ver MAX_EMOJI_BYTES em emojis.ts).
+db.exec(`
+  CREATE TABLE IF NOT EXISTS custom_emojis (
+    id TEXT PRIMARY KEY,
+    code TEXT NOT NULL UNIQUE,
+    filename TEXT NOT NULL,
+    added_by TEXT NOT NULL,
+    created_at INTEGER NOT NULL
   );
 `);

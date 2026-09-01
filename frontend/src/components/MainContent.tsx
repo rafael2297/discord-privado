@@ -8,6 +8,8 @@ interface Props {
   view: "chat" | "call";
   showMembers: boolean;
   onToggleMembers: () => void;
+  backendUrl: string;
+  authToken: string;
 }
 
 export default function MainContent({
@@ -16,6 +18,8 @@ export default function MainContent({
   view,
   showMembers,
   onToggleMembers,
+  backendUrl,
+  authToken,
 }: Props) {
   if (view === "call" && inCall) {
     return (
@@ -23,6 +27,8 @@ export default function MainContent({
         username={username}
         showMembers={showMembers}
         onToggleMembers={onToggleMembers}
+        backendUrl={backendUrl}
+        authToken={authToken}
       />
     );
   }
@@ -41,7 +47,7 @@ export default function MainContent({
           <Users size={18} />
         </button>
       </div>
-      <ChatPanel username={username} />
+      <ChatPanel username={username} backendUrl={backendUrl} authToken={authToken} />
     </div>
   );
 }

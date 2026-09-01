@@ -1,11 +1,15 @@
+import { useState } from "react";
 import { useMediaDeviceSelect } from "@livekit/components-react";
-import { X } from "lucide-react";
+import { X, User, SlidersHorizontal, Music4, Smile, LogOut } from "lucide-react";
+import SoundboardManager from "./SoundboardManager";
+import EmojiManager from "./EmojiManager";
 
 interface Props {
   onClose: () => void;
   inCall: boolean;
   username: string;
   backendUrl: string;
+  authToken: string;
   onLogout: () => void;
 }
 
@@ -35,7 +39,25 @@ function DeviceSelect({ kind, label }: { kind: MediaDeviceKind; label: string })
   );
 }
 
-export default function SettingsModal({ onClose, inCall, username, backendUrl, onLogout }: Props) {
+type Tab = "account" | "devices" | "soundboard" | "emojis";
+
+const TABS: { id: Tab; label: string; icon: typeof User }[] = [
+  { id: "account", label: "Minha conta", icon: User },
+  { id: "devices", label: "Dispositivos", icon: SlidersHorizontal },
+  { id: "soundboard", label: "Soundboard", icon: Music4 },
+  { id: "emojis", label: "Emojis", icon: Smile },
+];
+
+export default function SettingsModal({
+  onClose,
+  inCall,
+  username,
+  backendUrl,
+  authToken,
+  onLogout,
+}: Props) {
+  const [activeTab, setActiveTab] = useState<Tab>("account");
+
   function handleLogoutClick() {
     if (inCall) {
       const confirmed = window.confirm(
@@ -47,44 +69,79 @@ export default function SettingsModal({ onClose, inCall, username, backendUrl, o
     onLogout();
   }
 
+  const activeLabel = TABS.find((t) => t.id === activeTab)?.label ?? "";
+
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h3>Configurações</h3>
-          <button className="icon-btn" onClick={onClose}>
-            <X size={18} />
-          </button>
-        </div>
+      <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
+        <nav className="settings-sidebar">
+          <div className="settings-sidebar-title">Configurações</div>
 
-        <div className="modal-section">
-          <div className="modal-section-title">Dispositivos</div>
-          {inCall ? (
-            <>
-              <DeviceSelect kind="audioinput" label="Microfone" />
-              <DeviceSelect kind="videoinput" label="Câmera" />
-              <DeviceSelect kind="audiooutput" label="Saída de áudio (alto-falante)" />
-              <p className="device-select-note">
-                Saída de áudio pode não funcionar no Firefox (suporte limitado do navegador).
+          <div className="settings-tab-list">
+            {TABS.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  className={`settings-tab-btn ${activeTab === tab.id ? "active" : ""}`}
+                  onClick={() => setActiveTab(tab.id)}
+                >
+                  <Icon size={16} />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="settings-sidebar-divider" />
+
+          <button className="settings-tab-btn settings-logout-btn" onClick={handleLogoutClick}>
+            <LogOut size={16} />
+            <span>Trocar de nome/servidor</span>
+          </button>
+        </nav>
+
+        <div className="settings-content">
+          <div className="settings-content-header">
+            <h3>{activeLabel}</h3>
+            <button className="icon-btn" onClick={onClose} title="Fechar">
+              <X size={18} />
+            </button>
+          </div>
+
+          <div className="settings-content-body">
+            {activeTab === "account" && (
+              <p className="account-info">
+                Logado como <strong>{username}</strong>
+                <br />
+                Servidor: {backendUrl}
               </p>
-            </>
-          ) : (
-            <p className="device-select-empty">
-              Entre no canal de voz pra poder trocar microfone/câmera.
-            </p>
-          )}
-        </div>
+            )}
 
-        <div className="modal-section">
-          <div className="modal-section-title">Conta</div>
-          <p className="account-info">
-            Logado como <strong>{username}</strong>
-            <br />
-            Servidor: {backendUrl}
-          </p>
-          <button className="secondary-btn" onClick={handleLogoutClick}>
-            Trocar de nome/servidor
-          </button>
+            {activeTab === "devices" &&
+              (inCall ? (
+                <>
+                  <DeviceSelect kind="audioinput" label="Microfone" />
+                  <DeviceSelect kind="videoinput" label="Câmera" />
+                  <DeviceSelect kind="audiooutput" label="Saída de áudio (alto-falante)" />
+                  <p className="device-select-note">
+                    Saída de áudio pode não funcionar no Firefox (suporte limitado do navegador).
+                  </p>
+                </>
+              ) : (
+                <p className="device-select-empty">
+                  Entre no canal de voz pra poder trocar microfone/câmera.
+                </p>
+              ))}
+
+            {activeTab === "soundboard" && (
+              <SoundboardManager backendUrl={backendUrl} authToken={authToken} username={username} />
+            )}
+
+            {activeTab === "emojis" && (
+              <EmojiManager backendUrl={backendUrl} authToken={authToken} username={username} />
+            )}
+          </div>
         </div>
       </div>
     </div>

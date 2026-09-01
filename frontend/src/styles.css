@@ -295,6 +295,133 @@ body {
   max-width: 90vw;
 }
 
+/* ---- Configurações: modal maior, com abas verticais à esquerda ---- */
+
+.settings-modal {
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  width: 750px;
+  max-width: 92vw;
+  height: 560px;
+  max-height: 85vh;
+  display: flex;
+  overflow: hidden;
+}
+
+.settings-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--bg-tertiary);
+  padding: 16px 8px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.settings-sidebar-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 0 10px 10px;
+}
+
+.settings-tab-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.settings-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  padding: 8px 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+}
+
+.settings-tab-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.settings-tab-btn.active {
+  background: var(--bg-hover);
+  color: var(--text-bright);
+}
+
+.settings-sidebar-divider {
+  flex: 1;
+  min-height: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin: 8px 4px;
+}
+
+.settings-logout-btn {
+  color: var(--danger);
+}
+
+.settings-logout-btn:hover {
+  background: rgba(237, 66, 69, 0.1);
+  color: var(--danger);
+}
+
+.settings-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.settings-content-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--bg-tertiary);
+  flex-shrink: 0;
+}
+
+.settings-content-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--text-bright);
+}
+
+.settings-content-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+/* Input com botão de emoji dentro (usado no nome do som) */
+
+.input-with-emoji {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.input-with-emoji input[type="text"] {
+  flex: 1;
+}
+
+.input-emoji-btn {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.input-emoji-btn:hover {
+  color: var(--text);
+}
+
 .modal-header {
   display: flex;
   align-items: center;
@@ -365,6 +492,169 @@ body {
 
 .icon-btn.small.muted {
   color: var(--danger);
+}
+
+/* ---- Seções dentro de modais (usado no Settings e no Soundboard) ---- */
+
+.modal-section {
+  margin-bottom: 16px;
+}
+
+.modal-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.account-info {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0 0 8px;
+}
+
+/* ---- Soundboard ---- */
+
+/* Painel flutuante do soundboard — ancorado perto de onde o botão fica
+   (canto inferior esquerdo, acima da barra de voz/usuário), igual ao
+   Discord de verdade. Backdrop invisível, só pra fechar ao clicar fora
+   — não escurece a tela toda como um modal comum. */
+
+.soundboard-popover-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+}
+
+.soundboard-popover {
+  position: fixed;
+  bottom: 92px;
+  left: 16px;
+  width: 420px;
+  max-height: 70vh;
+  background: var(--bg-floating);
+  border: 1px solid var(--bg-tertiary);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.soundboard-popover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.soundboard-popover-header h3 {
+  margin: 0;
+  font-size: 15px;
+  color: var(--text-bright);
+}
+
+/* Grade de USAR (SoundboardPanel, aberto pela barra de voz) — cada
+   quadrado só tem o nome (que pode ter emoji, funcionando como ícone
+   visual do som — seletor de emoji dedicado é a próxima etapa). */
+
+.soundboard-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.soundboard-tile {
+  background: var(--bg-tertiary);
+  border: none;
+  color: var(--text);
+  border-radius: 8px;
+  padding: 14px 8px;
+  min-height: 56px;
+  cursor: pointer;
+  font-size: 13px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.soundboard-tile:hover {
+  background: var(--bg-hover);
+}
+
+.soundboard-tile:active {
+  background: rgba(88, 101, 242, 0.3);
+}
+
+/* Lista de GERENCIAR (SoundboardManager, dentro de Configurações) */
+
+.soundboard-manage-list {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.soundboard-manage-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: var(--bg-tertiary);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.soundboard-manage-item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.soundboard-upload-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.soundboard-upload-form input[type="text"] {
+  background: var(--bg-tertiary);
+  border: 1px solid #3a3c41;
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.soundboard-upload-form input[type="file"] {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.soundboard-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.soundboard-error {
+  color: var(--danger);
+  font-size: 13px;
+  margin: 4px 0 12px;
 }
 
 /* ---- Seletor de tela/janela (Electron) ---- */
@@ -743,11 +1033,18 @@ body {
 
 .voice-status-bar {
   background: var(--bg-floating);
-  padding: 8px 8px 8px 12px;
+  padding: 10px 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid var(--bg-tertiary);
+}
+
+.voice-status-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-top: 1px solid var(--bg-tertiary);
+  gap: 8px;
 }
 
 .voice-status-info {
@@ -776,9 +1073,34 @@ body {
   color: var(--text-muted);
 }
 
-.voice-status-actions {
+/* Grade de botões grandes (câmera / tela / soundboard) — mais espaçados
+   e com alvo de clique maior, em vez de ícones espremidos numa linha só. */
+
+.voice-status-features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.voice-feature-btn {
+  background: var(--bg-tertiary);
+  border: none;
+  color: var(--text);
+  border-radius: 8px;
+  padding: 10px 0;
   display: flex;
-  gap: 2px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.voice-feature-btn:hover {
+  background: var(--bg-hover);
+}
+
+.voice-feature-btn.on {
+  background: rgba(88, 101, 242, 0.3);
+  color: var(--accent);
 }
 
 /* Rodapé com usuário */
@@ -789,6 +1111,13 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.sidebar-bottom-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
 .user-avatar {
@@ -1160,6 +1489,122 @@ body {
 .chat-input-row button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* O botão de emoji é um <button> dentro do mesmo .chat-input-row do
+   "Enviar", mas não deve herdar o visual roxo dele — reseta pro visual
+   neutro de ícone. */
+.chat-input-row .chat-emoji-btn {
+  background: transparent;
+  color: var(--text-muted);
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+
+.chat-input-row .chat-emoji-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+/* Emoji personalizado inline numa mensagem de chat */
+
+.chat-emoji {
+  height: 22px;
+  width: 22px;
+  vertical-align: -6px;
+  object-fit: contain;
+}
+
+/* ---- Seletor de emoji (EmojiPicker) ---- */
+
+.emoji-picker-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 250;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.emoji-picker {
+  width: 320px;
+  max-height: 360px;
+  background: var(--bg-floating);
+  border: 1px solid var(--bg-tertiary);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.emoji-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-bright);
+  margin-bottom: 8px;
+}
+
+.emoji-picker-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 8px 0 6px;
+}
+
+.emoji-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 2px;
+  overflow-y: auto;
+  max-height: 140px;
+}
+
+.emoji-picker-item {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  padding: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.emoji-picker-item:hover {
+  background: var(--bg-hover);
+}
+
+.emoji-picker-item-custom img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.emoji-picker-note {
+  margin-top: 8px;
+}
+
+/* ---- Preview de emoji na lista de gerenciar (Configurações) ---- */
+
+.emoji-manage-item {
+  gap: 8px;
+}
+
+.emoji-manage-preview {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.emoji-manage-item span {
+  flex: 1;
 }
 
 /* ---- Scrollbar escura (estilo Discord) ---- */

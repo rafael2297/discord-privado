@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Hash, Volume2, Settings } from "lucide-react";
 import VoiceUserBar from "./VoiceUserBar";
+import VoiceMicControl from "./VoiceMicControl";
 import VoiceParticipants from "./VoiceParticipants";
 import VoiceChannelPreview from "./VoiceChannelPreview";
 import SettingsModal from "./SettingsModal";
@@ -73,17 +74,20 @@ export default function ChannelSidebar({
 
       </div>
 
-      {inCall && <VoiceUserBar />}
+      {inCall && <VoiceUserBar backendUrl={backendUrl} authToken={authToken} />}
 
       <div className="sidebar-bottom">
         <div className="user-avatar">{username.slice(0, 2).toUpperCase()}</div>
         <div className="user-info">
           <div className="user-name">{username}</div>
-          <div className="user-status">Online</div>
+          <div className="user-status">{inCall ? "Em voz" : "Online"}</div>
         </div>
-        <button className="icon-btn" title="Configurações" onClick={() => setShowSettings(true)}>
-          <Settings size={16} />
-        </button>
+        <div className="sidebar-bottom-actions">
+          {inCall && <VoiceMicControl />}
+          <button className="icon-btn" title="Configurações" onClick={() => setShowSettings(true)}>
+            <Settings size={16} />
+          </button>
+        </div>
       </div>
 
       {showSettings && (
@@ -92,6 +96,7 @@ export default function ChannelSidebar({
           inCall={inCall}
           username={username}
           backendUrl={backendUrl}
+          authToken={authToken}
           onLogout={onLogout}
         />
       )}

@@ -8,9 +8,17 @@ interface Props {
   username: string;
   showMembers: boolean;
   onToggleMembers: () => void;
+  backendUrl: string;
+  authToken: string;
 }
 
-export default function CallView({ username, showMembers, onToggleMembers }: Props) {
+export default function CallView({
+  username,
+  showMembers,
+  onToggleMembers,
+  backendUrl,
+  authToken,
+}: Props) {
   const [showChat, setShowChat] = useState(false);
   const participants = useParticipants();
 
@@ -43,7 +51,7 @@ export default function CallView({ username, showMembers, onToggleMembers }: Pro
         </div>
         {showChat && (
           <div className="call-view-chat">
-            <ChatPanel username={username} />
+            <ChatPanel username={username} backendUrl={backendUrl} authToken={authToken} />
           </div>
         )}
       </div>

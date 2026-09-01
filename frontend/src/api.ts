@@ -18,6 +18,22 @@ export interface VoiceParticipant {
   identity: string;
 }
 
+export interface SoundboardSound {
+  id: string;
+  name: string;
+  url: string;
+  addedBy: string;
+  createdAt: number;
+}
+
+export interface CustomEmoji {
+  id: string;
+  code: string;
+  url: string;
+  addedBy: string;
+  createdAt: number;
+}
+
 export async function fetchVoiceParticipants(
   backendUrl: string,
   authToken: string,
@@ -65,4 +81,89 @@ export async function fetchJoinToken(
     headers: { Authorization: `Bearer ${authToken}` },
   });
   return parseJsonOrThrow(res);
+}
+
+/** Lista os sons do soundboard disponíveis (compartilhados entre todos). */
+export async function fetchSounds(
+  backendUrl: string,
+  authToken: string
+): Promise<SoundboardSound[]> {
+  const res = await fetch(`${backendUrl}/sounds`, {
+    headers: { Authorization: `Bearer ${authToken}` },
+  });
+  const data = await parseJsonOrThrow(res);
+  return data.sounds;
+}
+
+/**
+ * Envia um novo som pro soundboard. Sem limite de duração ou quantidade
+ * — só um teto de tamanho de arquivo do lado do backend (segurança, não
+ * é uma restrição de feature).
+ */
+export async function uploadSound(
+  backendUrl: string,
+  authToken: string,
+  name: string,
+  file: File
+): Promise<SoundboardSound> {
+  const params = new URLSearchParams({ name, filename: file.name });
+  const res = await fetch(`${backendUrl}/sounds?${params.toString()}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${authToken}`,
+      "Content-Type": file.type || "application/octet-stream",
+    },
+    body: file,
+  });
+  const data = await parseJsonOrThrow(res);
+  return data.sound;
+}
+
+export async function deleteSound(backendUrl: string, authToken: string, id: string): Promise<void> {
+  const res = await fetch(`${backendUrl}/sounds/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${authToken}` },
+  });
+  await parseJsonOrThrow(res);
+}
+
+/** Lista os emojis personalizados disponíveis (compartilhados entre todos). */
+export async function fetchEmojis(backendUrl: string, authToken: string): Promise<CustomEmoji[]> {
+  const res = await fetch(`${backendUrl}/emojis`, {
+    headers: { Authorization: `Bearer ${authToken}` },
+  });
+  const data = await parseJsonOrThrow(res);
+  return data.emojis;
+}
+
+/**
+ * Envia um novo emoji personalizado. `code` é o atalho usado no chat
+ * (ex: "buzina" vira :buzina:) — precisa ser único. Sem limite de
+ * quantidade de emojis, só um teto de tamanho de arquivo no backend.
+ */
+export async function uploadEmoji(
+  backendUrl: string,
+  authToken: string,
+  code: string,
+  file: File
+): Promise<CustomEmoji> {
+  const params = new URLSearchParams({ code, filename: file.name });
+  const res = await fetch(`${backendUrl}/emojis?${params.toString()}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${authToken}`,
+      "Content-Type": file.type || "application/octet-stream",
+    },
+    body: file,
+  });
+  const data = await parseJsonOrThrow(res);
+  return data.emoji;
+}
+
+export async function deleteEmoji(backendUrl: string, authToken: string, id: string): Promise<void> {
+  const res = await fetch(`${backendUrl}/emojis/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${authToken}` },
+  });
+  await parseJsonOrThrow(res);
 }

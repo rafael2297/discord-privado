@@ -10,6 +10,7 @@ frontend/resources/*.zip
 **/.env
 !**/.env.example
 **/*.db
+backend/data/sounds/
 
 # Binários e downloads locais
 livekit-server.exe

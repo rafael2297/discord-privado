@@ -4,6 +4,7 @@ import { fetchJoinToken, JoinTokenResult } from "../api";
 import ChannelSidebar from "./ChannelSidebar";
 import MainContent from "./MainContent";
 import VoiceSoundEffects from "./VoiceSoundEffects";
+import SoundboardAudioRenderer from "./SoundboardAudioRenderer";
 import ReconnectBanner from "./ReconnectBanner";
 import MemberSidebar from "./MemberSidebar";
 import { playJoinSound, playLeaveSound } from "../soundEffects";
@@ -90,6 +91,8 @@ export default function Workspace({ backendUrl, authToken, username, onLogout }:
         view={mainView}
         showMembers={showMembers}
         onToggleMembers={() => setShowMembers((visible) => !visible)}
+        backendUrl={backendUrl}
+        authToken={authToken}
       />
       {showMembers && <MemberSidebar />}
     </div>
@@ -119,6 +122,7 @@ export default function Workspace({ backendUrl, authToken, username, onLogout }:
         >
           <ReconnectBanner />
           <VoiceSoundEffects />
+          <SoundboardAudioRenderer />
           {layout}
           <RoomAudioRenderer />
         </LiveKitRoom>

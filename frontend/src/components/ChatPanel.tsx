@@ -1,8 +1,14 @@
 import { useEffect, useRef, useState } from "react";
+import { Smile } from "lucide-react";
 import { useChatConnection } from "../ChatConnectionContext";
+import { fetchEmojis, CustomEmoji } from "../api";
+import { renderMessageText, buildEmojiUrlMap } from "../emojiText";
+import EmojiPicker from "./EmojiPicker";
 
 interface Props {
   username: string;
+  backendUrl: string;
+  authToken: string;
 }
 
 function formatTime(timestamp: number) {
@@ -13,14 +19,40 @@ function formatTime(timestamp: number) {
 // agrupadas (sem repetir avatar/nome), igual ao Discord.
 const GROUP_WINDOW_MS = 5 * 60 * 1000;
 
-export default function ChatPanel({ username }: Props) {
+export default function ChatPanel({ username, backendUrl, authToken }: Props) {
   const { messages, connected, sendMessage } = useChatConnection();
   const [draft, setDraft] = useState("");
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [customEmojis, setCustomEmojis] = useState<CustomEmoji[]>([]);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Carrega os emojis personalizados uma vez, pra saber traduzir ":codigo:"
+  // em imagem nas mensagens já recebidas. Se alguém adicionar um emoji
+  // novo enquanto o chat já está aberto, só aparece depois de reabrir o
+  // chat/app — aceitável por enquanto, não há um evento em tempo real
+  // avisando sobre emojis novos.
+  useEffect(() => {
+    let cancelled = false;
+    fetchEmojis(backendUrl, authToken)
+      .then((list) => {
+        if (!cancelled) setCustomEmojis(list);
+      })
+      .catch(() => {
+        // Sem emoji personalizado carregado, as mensagens só não mostram
+        // a imagem (o ":codigo:" some/vira imagem quebrada) — não trava
+        // o chat por causa disso.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [backendUrl, authToken]);
+
+  const emojiByCode = buildEmojiUrlMap(backendUrl, customEmojis);
 
   function send() {
     if (!draft.trim()) return;
@@ -33,6 +65,33 @@ export default function ChatPanel({ username }: Props) {
       e.preventDefault();
       send();
     }
+  }
+
+  function insertAtCursor(text: string) {
+    const el = textareaRef.current;
+    if (!el) {
+      setDraft((prev) => prev + text);
+      return;
+    }
+    const start = el.selectionStart ?? draft.length;
+    const end = el.selectionEnd ?? draft.length;
+    const next = draft.slice(0, start) + text + draft.slice(end);
+    setDraft(next);
+    // Devolve o foco e o cursor logo depois do que foi inserido.
+    requestAnimationFrame(() => {
+      el.focus();
+      const cursor = start + text.length;
+      el.setSelectionRange(cursor, cursor);
+    });
+  }
+
+  function handleSelectNative(emoji: string) {
+    insertAtCursor(emoji);
+  }
+
+  function handleSelectCustom(emoji: CustomEmoji) {
+    insertAtCursor(`:${emoji.code}:`);
+    setCustomEmojis((prev) => (prev.some((e) => e.id === emoji.id) ? prev : [...prev, emoji]));
   }
 
   return (
@@ -63,7 +122,7 @@ export default function ChatPanel({ username }: Props) {
                   </div>
                 )}
                 <div className="chat-text-row">
-                  <span className="chat-text">{m.text}</span>
+                  <span className="chat-text">{renderMessageText(m.text, emojiByCode)}</span>
                   {grouped && <span className="chat-timestamp-hover">{formatTime(m.timestamp)}</span>}
                 </div>
               </div>
@@ -75,16 +134,30 @@ export default function ChatPanel({ username }: Props) {
 
       <div className="chat-input-row">
         <textarea
+          ref={textareaRef}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={connected ? "Mensagem para #geral" : "Reconectando ao chat..."}
           rows={1}
         />
+        <button className="icon-btn chat-emoji-btn" onClick={() => setPickerOpen(true)} title="Emojis">
+          <Smile size={20} />
+        </button>
         <button onClick={send} disabled={!draft.trim() || !connected}>
           Enviar
         </button>
       </div>
+
+      {pickerOpen && (
+        <EmojiPicker
+          backendUrl={backendUrl}
+          authToken={authToken}
+          onClose={() => setPickerOpen(false)}
+          onSelectNative={handleSelectNative}
+          onSelectCustom={handleSelectCustom}
+        />
+      )}
     </div>
   );
 }
