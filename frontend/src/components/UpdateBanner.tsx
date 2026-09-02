@@ -1,41 +1,23 @@
-import { useEffect, useState } from "react";
 import { ArrowDownCircle, Loader2 } from "lucide-react";
-import { onUpdateStatus, installUpdate, UpdateStatus } from "../host";
+import { useUpdateStatus } from "../UpdateContext";
 
 /**
- * Aviso "Nova versão" no canto superior direito — aparece sozinho quando
- * o electron-updater encontra uma atualização no GitHub Releases (ver
- * main.cjs). Enquanto ainda está baixando, mostra só um spinner (não dá
- * pra instalar ainda); quando termina de baixar, fica clicável e instala
- * ao clicar. Fora do Electron (navegador) não faz nada — onUpdateStatus
- * nunca dispara.
+ * Aviso "Nova versão" fixo no canto superior direito — usado só nas
+ * telas de login/hospedar (antes de entrar no app). Dentro do app, o
+ * aviso equivalente é o <UpdateBadge> no cabeçalho (ver MainContent.tsx
+ * e CallView.tsx), ao lado do botão de mostrar/esconder membros.
  */
 export default function UpdateBanner() {
-  const [status, setStatus] = useState<UpdateStatus | null>(null);
-  const [installing, setInstalling] = useState(false);
-
-  useEffect(() => {
-    return onUpdateStatus(setStatus);
-  }, []);
+  const { status, installing, install } = useUpdateStatus();
 
   if (!status) return null;
 
   const ready = status.status === "downloaded";
 
-  async function handleClick() {
-    if (!ready || installing) return;
-    setInstalling(true);
-    try {
-      await installUpdate();
-    } catch {
-      setInstalling(false);
-    }
-  }
-
   return (
     <button
       className={`update-banner ${ready ? "ready" : "downloading"}`}
-      onClick={handleClick}
+      onClick={install}
       disabled={!ready || installing}
       title={
         ready

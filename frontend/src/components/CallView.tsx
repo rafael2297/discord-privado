@@ -3,6 +3,7 @@ import { useParticipants } from "@livekit/components-react";
 import { Volume2, MessageSquare, Users } from "lucide-react";
 import ParticipantGrid from "./ParticipantGrid";
 import ChatPanel from "./ChatPanel";
+import UpdateBadge from "./UpdateBadge";
 
 interface Props {
   username: string;
@@ -28,6 +29,7 @@ export default function CallView({
         <Volume2 size={18} className="main-header-icon" />
         <span>geral</span>
         <span className="main-header-count">{participants.length}</span>
+        <UpdateBadge />
         <button
           className={`icon-btn member-toggle ${showMembers ? "on" : ""}`}
           onClick={onToggleMembers}

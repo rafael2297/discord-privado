@@ -3,6 +3,7 @@ import StartScreen from "./components/StartScreen";
 import LoginScreen from "./components/LoginScreen";
 import Workspace from "./components/Workspace";
 import UpdateBanner from "./components/UpdateBanner";
+import { UpdateProvider } from "./UpdateContext";
 import { AuthUser } from "./api";
 import { isEnvElectron } from "./host";
 
@@ -49,43 +50,43 @@ export default function App() {
     setScreen(isEnvElectron() ? "start" : "login");
   }
 
-  if (!session) {
-    return (
-      <div className="app-shell">
-        <UpdateBanner />
-        <header>
-          <h1>🎧 Discord Privado</h1>
-        </header>
-        <main>
-          {screen === "start" ? (
-            <StartScreen
-              onHostReady={(backendUrl) => {
-                setPrefillBackendUrl(backendUrl);
-                setScreen("login");
-              }}
-              onJoinExisting={() => setScreen("login")}
-            />
-          ) : (
-            <LoginScreen
-              onAuthenticated={handleAuthenticated}
-              initialBackendUrl={prefillBackendUrl}
-              onBack={isEnvElectron() ? () => setScreen("start") : undefined}
-            />
-          )}
-        </main>
-      </div>
-    );
-  }
-
+  // UpdateProvider fica UMA vez aqui em cima, fora das telas condicionais
+  // — assim o estado de atualização não se perde quando o usuário sai da
+  // tela de login/hospedar e entra no Workspace (ver UpdateContext.tsx).
   return (
-    <>
-      <UpdateBanner />
-      <Workspace
-        backendUrl={session.backendUrl}
-        authToken={session.token}
-        username={session.user.username}
-        onLogout={handleLogout}
-      />
-    </>
+    <UpdateProvider>
+      {!session ? (
+        <div className="app-shell">
+          <UpdateBanner />
+          <header>
+            <h1>🎧 Discord Privado</h1>
+          </header>
+          <main>
+            {screen === "start" ? (
+              <StartScreen
+                onHostReady={(backendUrl) => {
+                  setPrefillBackendUrl(backendUrl);
+                  setScreen("login");
+                }}
+                onJoinExisting={() => setScreen("login")}
+              />
+            ) : (
+              <LoginScreen
+                onAuthenticated={handleAuthenticated}
+                initialBackendUrl={prefillBackendUrl}
+                onBack={isEnvElectron() ? () => setScreen("start") : undefined}
+              />
+            )}
+          </main>
+        </div>
+      ) : (
+        <Workspace
+          backendUrl={session.backendUrl}
+          authToken={session.token}
+          username={session.user.username}
+          onLogout={handleLogout}
+        />
+      )}
+    </UpdateProvider>
   );
 }

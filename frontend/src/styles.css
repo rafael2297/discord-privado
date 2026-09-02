@@ -560,6 +560,35 @@ body {
   }
 }
 
+/* Versão compacta do aviso, dentro do cabeçalho do app (ver
+   UpdateBadge.tsx) — mesma cor/lógica do .update-banner, só menor e sem
+   position:fixed, já que aqui é um item de verdade no fluxo do header. */
+
+.update-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--online);
+  color: white;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.update-badge.downloading {
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+  cursor: default;
+}
+
+.update-badge.ready:hover {
+  filter: brightness(1.1);
+}
+
 /* Painel flutuante do soundboard — ancorado perto de onde o botão fica
    (canto inferior esquerdo, acima da barra de voz/usuário), igual ao
    Discord de verdade. Backdrop invisível, só pra fechar ao clicar fora
@@ -1277,6 +1306,27 @@ body {
 }
 
 .main-header-count + .member-toggle {
+  margin-left: 0;
+}
+
+/* UpdateBadge (aviso de atualização, ver UpdateBadge.tsx) some do DOM
+   de vez quando não há atualização (retorna null), então essas regras só
+   entram em ação quando ele realmente está sendo exibido. */
+
+.update-badge {
+  margin-left: auto;
+}
+
+.main-header-count + .update-badge {
+  /* No CallView, o contador de participantes já empurrou tudo depois
+     dele pra direita — sem isso, o badge tentaria empurrar de novo e
+     abriria um espaço vazio entre o contador e o badge. */
+  margin-left: 0;
+}
+
+.update-badge + .member-toggle {
+  /* O badge (quando presente) já cuidou de empurrar o grupo pra
+     direita — o botão de membros só precisa vir logo depois, colado. */
   margin-left: 0;
 }
 

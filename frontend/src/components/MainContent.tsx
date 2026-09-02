@@ -1,6 +1,7 @@
 import { Hash, Users } from "lucide-react";
 import ChatPanel from "./ChatPanel";
 import CallView from "./CallView";
+import UpdateBadge from "./UpdateBadge";
 
 interface Props {
   username: string;
@@ -38,6 +39,7 @@ export default function MainContent({
       <div className="main-header">
         <Hash size={18} className="main-header-icon" />
         <span>geral</span>
+        <UpdateBadge />
         <button
           className={`icon-btn member-toggle ${showMembers ? "on" : ""}`}
           onClick={onToggleMembers}
