@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { Smile } from "lucide-react";
-import { useChatConnection } from "../ChatConnectionContext";
-import { fetchEmojis, CustomEmoji } from "../api";
+import { Smile, Paperclip, Image as ImageIcon, X } from "lucide-react";
+import { useChatConnection, ChatAttachment } from "../ChatConnectionContext";
+import { fetchEmojis, uploadAttachment, CustomEmoji } from "../api";
 import { renderMessageText, buildEmojiUrlMap } from "../emojiText";
 import EmojiPicker from "./EmojiPicker";
+import GifPicker from "./GifPicker";
 
 interface Props {
   username: string;
@@ -22,10 +23,15 @@ const GROUP_WINDOW_MS = 5 * 60 * 1000;
 export default function ChatPanel({ username, backendUrl, authToken }: Props) {
   const { messages, connected, sendMessage } = useChatConnection();
   const [draft, setDraft] = useState("");
-  const [pickerOpen, setPickerOpen] = useState(false);
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
+  const [gifPickerOpen, setGifPickerOpen] = useState(false);
   const [customEmojis, setCustomEmojis] = useState<CustomEmoji[]>([]);
+  const [pendingAttachment, setPendingAttachment] = useState<ChatAttachment | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -55,9 +61,10 @@ export default function ChatPanel({ username, backendUrl, authToken }: Props) {
   const emojiByCode = buildEmojiUrlMap(backendUrl, customEmojis);
 
   function send() {
-    if (!draft.trim()) return;
-    sendMessage(draft);
+    if (!draft.trim() && !pendingAttachment) return;
+    sendMessage(draft, pendingAttachment ?? undefined);
     setDraft("");
+    setPendingAttachment(null);
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -94,6 +101,31 @@ export default function ChatPanel({ username, backendUrl, authToken }: Props) {
     setCustomEmojis((prev) => (prev.some((e) => e.id === emoji.id) ? prev : [...prev, emoji]));
   }
 
+  function handleSelectGif(gif: { url: string; width: number; height: number }) {
+    // GIF já está hospedado pela Klipy — não precisa passar pelo nosso
+    // backend, é só mandar a URL direto como anexo.
+    setGifPickerOpen(false);
+    sendMessage("", { url: gif.url, type: "gif" });
+  }
+
+  async function handleFilePicked(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // permite escolher o mesmo arquivo de novo depois
+    if (!file) return;
+
+    const kind = file.type.startsWith("audio/") ? "audio" : "image";
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const uploaded = await uploadAttachment(backendUrl, authToken, kind, file);
+      setPendingAttachment({ url: uploaded.url, type: uploaded.type, name: uploaded.name });
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Erro ao enviar arquivo");
+    } finally {
+      setUploading(false);
+    }
+  }
+
   return (
     <div className="chat-panel">
       <div className="chat-messages">
@@ -103,7 +135,9 @@ export default function ChatPanel({ username, backendUrl, authToken }: Props) {
           const grouped =
             prev &&
             prev.username === m.username &&
-            m.timestamp - prev.timestamp < GROUP_WINDOW_MS;
+            m.timestamp - prev.timestamp < GROUP_WINDOW_MS &&
+            !prev.attachmentUrl &&
+            !m.attachmentUrl;
 
           return (
             <div key={m.id} className={`chat-message-row ${grouped ? "grouped" : ""}`}>
@@ -121,10 +155,32 @@ export default function ChatPanel({ username, backendUrl, authToken }: Props) {
                     <span className="chat-timestamp">{formatTime(m.timestamp)}</span>
                   </div>
                 )}
-                <div className="chat-text-row">
-                  <span className="chat-text">{renderMessageText(m.text, emojiByCode)}</span>
-                  {grouped && <span className="chat-timestamp-hover">{formatTime(m.timestamp)}</span>}
-                </div>
+                {m.text && (
+                  <div className="chat-text-row">
+                    <span className="chat-text">{renderMessageText(m.text, emojiByCode)}</span>
+                    {grouped && <span className="chat-timestamp-hover">{formatTime(m.timestamp)}</span>}
+                  </div>
+                )}
+                {m.attachmentUrl && m.attachmentType === "audio" ? (
+                  <audio
+                    className="chat-attachment-audio"
+                    controls
+                    src={m.attachmentUrl.startsWith("http") ? m.attachmentUrl : `${backendUrl}${m.attachmentUrl}`}
+                  />
+                ) : m.attachmentUrl ? (
+                  <a
+                    href={m.attachmentUrl.startsWith("http") ? m.attachmentUrl : `${backendUrl}${m.attachmentUrl}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <img
+                      className="chat-attachment-image"
+                      src={m.attachmentUrl.startsWith("http") ? m.attachmentUrl : `${backendUrl}${m.attachmentUrl}`}
+                      alt={m.attachmentName || (m.attachmentType === "gif" ? "GIF" : "imagem")}
+                      loading="lazy"
+                    />
+                  </a>
+                ) : null}
               </div>
             </div>
           );
@@ -132,7 +188,46 @@ export default function ChatPanel({ username, backendUrl, authToken }: Props) {
         <div ref={bottomRef} />
       </div>
 
+      {(pendingAttachment || uploading || uploadError) && (
+        <div className="chat-pending-attachment">
+          {uploading ? (
+            <span className="device-select-empty">Enviando arquivo...</span>
+          ) : uploadError ? (
+            <span className="soundboard-error">{uploadError}</span>
+          ) : pendingAttachment ? (
+            <>
+              {pendingAttachment.type === "audio" ? (
+                <span>🎵 {pendingAttachment.name || "áudio"}</span>
+              ) : (
+                <img src={`${backendUrl}${pendingAttachment.url}`} alt="" />
+              )}
+              <button
+                className="icon-btn small muted"
+                onClick={() => setPendingAttachment(null)}
+                title="Remover anexo"
+              >
+                <X size={14} />
+              </button>
+            </>
+          ) : null}
+        </div>
+      )}
+
       <div className="chat-input-row">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*,audio/*"
+          hidden
+          onChange={handleFilePicked}
+        />
+        <button
+          className="icon-btn chat-emoji-btn"
+          onClick={() => fileInputRef.current?.click()}
+          title="Anexar imagem ou áudio"
+        >
+          <Paperclip size={20} />
+        </button>
         <textarea
           ref={textareaRef}
           value={draft}
@@ -141,22 +236,34 @@ export default function ChatPanel({ username, backendUrl, authToken }: Props) {
           placeholder={connected ? "Mensagem para #geral" : "Reconectando ao chat..."}
           rows={1}
         />
-        <button className="icon-btn chat-emoji-btn" onClick={() => setPickerOpen(true)} title="Emojis">
+        <button
+          className="icon-btn chat-emoji-btn chat-gif-btn"
+          onClick={() => setGifPickerOpen(true)}
+          title="GIF"
+        >
+          <ImageIcon size={18} />
+          <span>GIF</span>
+        </button>
+        <button className="icon-btn chat-emoji-btn" onClick={() => setEmojiPickerOpen(true)} title="Emojis">
           <Smile size={20} />
         </button>
-        <button onClick={send} disabled={!draft.trim() || !connected}>
+        <button onClick={send} disabled={(!draft.trim() && !pendingAttachment) || !connected || uploading}>
           Enviar
         </button>
       </div>
 
-      {pickerOpen && (
+      {emojiPickerOpen && (
         <EmojiPicker
           backendUrl={backendUrl}
           authToken={authToken}
-          onClose={() => setPickerOpen(false)}
+          onClose={() => setEmojiPickerOpen(false)}
           onSelectNative={handleSelectNative}
           onSelectCustom={handleSelectCustom}
         />
+      )}
+
+      {gifPickerOpen && (
+        <GifPicker onClose={() => setGifPickerOpen(false)} onSelect={handleSelectGif} />
       )}
     </div>
   );

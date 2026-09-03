@@ -7,6 +7,7 @@ import identifyRouter from "./identify";
 import roomsRouter from "./rooms";
 import soundsRouter, { SOUNDS_DIR } from "./sounds";
 import emojisRouter, { EMOJIS_DIR } from "./emojis";
+import attachmentsRouter, { ATTACHMENTS_DIR } from "./attachments";
 import { setupChat } from "./chat";
 
 const app = express();
@@ -19,13 +20,17 @@ app.get("/health", (_req, res) => {
 
 app.use("/auth", identifyRouter);
 app.use("/rooms", roomsRouter);
-// Arquivos de áudio do soundboard e imagens de emoji, servidos como
-// estáticos (o upload em si é tratado nos routers, com corpo bruto em
-// vez de multipart).
+// Arquivos de áudio do soundboard, imagens de emoji e anexos de chat
+// (imagem/áudio), servidos como estáticos (o upload em si é tratado nos
+// routers, com corpo bruto em vez de multipart). Busca de GIF não passa
+// pelo nosso backend — é feita direto do frontend pra API da Klipy, ver
+// GifPicker.tsx.
 app.use("/sounds/files", express.static(SOUNDS_DIR));
 app.use("/sounds", soundsRouter);
 app.use("/emojis/files", express.static(EMOJIS_DIR));
 app.use("/emojis", emojisRouter);
+app.use("/attachments/files", express.static(ATTACHMENTS_DIR));
+app.use("/attachments", attachmentsRouter);
 
 // WebSocket precisa de um servidor HTTP explícito (não dá pra usar
 // app.listen direto quando também tem WS na mesma porta).

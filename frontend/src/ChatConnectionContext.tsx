@@ -8,18 +8,29 @@ import {
 } from "react";
 import { notify } from "./notifications";
 
+export type AttachmentType = "image" | "audio" | "gif";
+
+export interface ChatAttachment {
+  url: string;
+  type: AttachmentType;
+  name?: string;
+}
+
 interface ChatMessage {
   id: string;
   username: string;
   text: string;
   timestamp: number;
+  attachmentUrl?: string | null;
+  attachmentType?: AttachmentType | null;
+  attachmentName?: string | null;
 }
 
 interface ChatConnectionValue {
   messages: ChatMessage[];
   onlineUsers: string[];
   connected: boolean;
-  sendMessage: (text: string) => void;
+  sendMessage: (text: string, attachment?: ChatAttachment) => void;
 }
 
 const ChatConnectionContext = createContext<ChatConnectionValue | null>(null);
@@ -82,7 +93,16 @@ export function ChatConnectionProvider({ backendUrl, authToken, username, childr
         } else if (data.type === "message") {
           setMessages((prev) => [...prev, data.message]);
           if (data.message.username !== username) {
-            notify(data.message.username, data.message.text);
+            const preview =
+              data.message.text ||
+              (data.message.attachmentType === "gif"
+                ? "[GIF]"
+                : data.message.attachmentType === "image"
+                  ? "[imagem]"
+                  : data.message.attachmentType === "audio"
+                    ? "[áudio]"
+                    : "");
+            notify(data.message.username, preview);
           }
         } else if (data.type === "presence") {
           setOnlineUsers(data.online);
@@ -99,10 +119,22 @@ export function ChatConnectionProvider({ backendUrl, authToken, username, childr
     };
   }, [backendUrl, authToken, username]);
 
-  function sendMessage(text: string) {
+  function sendMessage(text: string, attachment?: ChatAttachment) {
     const clean = text.trim();
-    if (!clean || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
-    wsRef.current.send(JSON.stringify({ type: "send", text: clean }));
+    // Precisa ter texto OU anexo — as duas coisas vazias não manda nada
+    // (mesma regra do backend, ver chat.ts).
+    if ((!clean && !attachment) || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      return;
+    }
+    wsRef.current.send(
+      JSON.stringify({
+        type: "send",
+        text: clean,
+        attachmentUrl: attachment?.url,
+        attachmentType: attachment?.type,
+        attachmentName: attachment?.name,
+      })
+    );
   }
 
   return (

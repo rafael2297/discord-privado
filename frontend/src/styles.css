@@ -18,6 +18,34 @@
   box-sizing: border-box;
 }
 
+/* Scrollbar fina e discreta em todo o app, em vez da padrão grande do
+   Windows/Chromium. `scrollbar-width`/`scrollbar-color` cobrem Firefox e
+   Chromium mais novo; `::-webkit-scrollbar` garante no Electron mesmo em
+   versões que ainda preferem o jeito antigo. */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--bg-active) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-active);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
 html, body, #root {
   height: 100%;
   margin: 0;
@@ -1599,6 +1627,18 @@ body {
   color: var(--text);
 }
 
+/* Botão de GIF tem um rótulo de texto junto do ícone, diferente dos
+   outros (que são só ícone) — precisa de um pouco mais de espaço. */
+.chat-gif-btn {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  width: auto;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
 /* Emoji personalizado inline numa mensagem de chat */
 
 .chat-emoji {
@@ -1608,18 +1648,102 @@ body {
   object-fit: contain;
 }
 
+/* Anexos (imagem/áudio/gif) dentro de uma mensagem de chat */
+
+.chat-attachment-image {
+  display: block;
+  max-width: 320px;
+  max-height: 300px;
+  border-radius: 8px;
+  margin-top: 4px;
+  cursor: pointer;
+}
+
+.chat-attachment-audio {
+  display: block;
+  margin-top: 4px;
+  max-width: 320px;
+  height: 36px;
+}
+
+/* Prévia do anexo escolhido, antes de enviar a mensagem — fica entre a
+   lista de mensagens e a caixa de digitar. */
+
+.chat-pending-attachment {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--bg-tertiary);
+  border-top: 1px solid var(--bg-secondary);
+}
+
+.chat-pending-attachment img {
+  height: 40px;
+  width: 40px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+/* ---- Seletor de GIF (GifPicker) ----
+   O visual em si é da lib gif-picker-react (componente .GifPickerReact,
+   com o provider Klipy) — aqui só cuidamos de posicionar o popover e
+   adaptar as cores dela pro nosso tema escuro via CSS vars, ver
+   https://github.com/MrBartusek/gif-picker-react#css-variables */
+
+.gif-picker-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 250;
+}
+
+.gif-picker-anchor {
+  position: fixed;
+  bottom: 70px;
+  right: 90px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.gif-picker-anchor .GifPickerReact {
+  /* Fundo/texto/scrollbar já vêm certos do theme={Theme.DARK} passado no
+     componente (ver GifPicker.tsx) — só ajustamos a cor de destaque pra
+     bater com o roxo da nossa marca em vez do padrão da lib. */
+  --gpr-highlight-color: var(--accent);
+}
+
+.gif-picker-missing-key {
+  position: fixed;
+  bottom: 70px;
+  right: 90px;
+  width: 320px;
+  background: var(--bg-floating);
+  border: 1px solid var(--bg-tertiary);
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.gif-picker-missing-key code {
+  background: var(--bg-tertiary);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 12px;
+}
+
 /* ---- Seletor de emoji (EmojiPicker) ---- */
 
 .emoji-picker-backdrop {
   position: fixed;
   inset: 0;
   z-index: 250;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .emoji-picker {
+  position: fixed;
+  bottom: 70px;
+  right: 90px;
   width: 320px;
   max-height: 360px;
   background: var(--bg-floating);

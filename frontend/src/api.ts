@@ -34,6 +34,20 @@ export interface CustomEmoji {
   createdAt: number;
 }
 
+export interface GifResult {
+  id: string;
+  url: string;
+  previewUrl: string;
+  width: number;
+  height: number;
+}
+
+export interface UploadedAttachment {
+  url: string;
+  type: "image" | "audio";
+  name: string;
+}
+
 export async function fetchVoiceParticipants(
   backendUrl: string,
   authToken: string,
@@ -166,4 +180,48 @@ export async function deleteEmoji(backendUrl: string, authToken: string, id: str
     headers: { Authorization: `Bearer ${authToken}` },
   });
   await parseJsonOrThrow(res);
+}
+
+/** GIFs em alta — mostrados quando o seletor de GIF abre sem busca ainda. */
+export async function fetchTrendingGifs(backendUrl: string, authToken: string): Promise<GifResult[]> {
+  const res = await fetch(`${backendUrl}/gifs/trending`, {
+    headers: { Authorization: `Bearer ${authToken}` },
+  });
+  const data = await parseJsonOrThrow(res);
+  return data.gifs;
+}
+
+export async function searchGifs(
+  backendUrl: string,
+  authToken: string,
+  query: string
+): Promise<GifResult[]> {
+  const res = await fetch(`${backendUrl}/gifs/search?q=${encodeURIComponent(query)}`, {
+    headers: { Authorization: `Bearer ${authToken}` },
+  });
+  const data = await parseJsonOrThrow(res);
+  return data.gifs;
+}
+
+/**
+ * Envia uma imagem ou áudio pra ser anexado numa mensagem de chat. O
+ * fluxo é: faz esse upload primeiro, pega a URL de volta, e só então
+ * manda a mensagem de chat de verdade (via WebSocket) com essa URL.
+ */
+export async function uploadAttachment(
+  backendUrl: string,
+  authToken: string,
+  kind: "image" | "audio",
+  file: File
+): Promise<UploadedAttachment> {
+  const params = new URLSearchParams({ kind, filename: file.name });
+  const res = await fetch(`${backendUrl}/attachments?${params.toString()}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${authToken}`,
+      "Content-Type": file.type || "application/octet-stream",
+    },
+    body: file,
+  });
+  return parseJsonOrThrow(res);
 }

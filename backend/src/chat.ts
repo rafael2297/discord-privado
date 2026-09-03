@@ -13,26 +13,59 @@ const JWT_SECRET = process.env.JWT_SECRET as string;
 const HISTORY_LIMIT = 50; // quantas mensagens mandar pro cliente ao conectar
 const HISTORY_CAP = 500; // quantas mensagens manter no banco no total
 
+// Anexo é opcional e pode vir SOZINHO (sem texto, ex: mandou só um GIF)
+// ou junto com texto (ex: legenda + imagem). "gif" é uma URL externa
+// (Tenor), "image"/"audio" apontam pro nosso próprio /attachments/files.
+type AttachmentType = "image" | "audio" | "gif";
+const ALLOWED_ATTACHMENT_TYPES: AttachmentType[] = ["image", "audio", "gif"];
+
 interface ChatMessage {
   id: string;
   username: string;
   text: string;
   timestamp: number;
+  attachmentUrl?: string | null;
+  attachmentType?: AttachmentType | null;
+  attachmentName?: string | null;
 }
 
 const insertStmt = db.prepare(
-  "INSERT INTO messages (id, username, text, timestamp) VALUES (?, ?, ?, ?)"
+  `INSERT INTO messages (id, username, text, timestamp, attachment_url, attachment_type, attachment_name)
+   VALUES (?, ?, ?, ?, ?, ?, ?)`
 );
 const historyStmt = db.prepare(
-  "SELECT id, username, text, timestamp FROM messages ORDER BY timestamp DESC LIMIT ?"
+  `SELECT id, username, text, timestamp, attachment_url, attachment_type, attachment_name
+   FROM messages ORDER BY timestamp DESC LIMIT ?`
 );
 const pruneStmt = db.prepare(
   "DELETE FROM messages WHERE id NOT IN (SELECT id FROM messages ORDER BY timestamp DESC LIMIT ?)"
 );
 
+interface MessageRow {
+  id: string;
+  username: string;
+  text: string;
+  timestamp: number;
+  attachment_url: string | null;
+  attachment_type: string | null;
+  attachment_name: string | null;
+}
+
+function rowToMessage(row: MessageRow): ChatMessage {
+  return {
+    id: row.id,
+    username: row.username,
+    text: row.text,
+    timestamp: row.timestamp,
+    attachmentUrl: row.attachment_url,
+    attachmentType: row.attachment_type as AttachmentType | null,
+    attachmentName: row.attachment_name,
+  };
+}
+
 function getHistory(): ChatMessage[] {
-  const rows = historyStmt.all(HISTORY_LIMIT) as unknown as ChatMessage[];
-  return rows.reverse(); // banco devolve mais recente primeiro, chat quer cronológico
+  const rows = historyStmt.all(HISTORY_LIMIT) as unknown as MessageRow[];
+  return rows.reverse().map(rowToMessage); // banco devolve mais recente primeiro, chat quer cronológico
 }
 
 const clients = new Set<WebSocket>();
@@ -89,26 +122,46 @@ export function setupChat(wss: WebSocketServer) {
       } catch {
         return;
       }
-      if (
-        typeof data !== "object" ||
-        data === null ||
-        (data as any).type !== "send" ||
-        typeof (data as any).text !== "string"
-      ) {
+      if (typeof data !== "object" || data === null || (data as any).type !== "send") {
         return;
       }
 
-      const text = (data as any).text.trim().slice(0, 2000);
-      if (!text) return;
+      const rawText = typeof (data as any).text === "string" ? (data as any).text : "";
+      const text = rawText.trim().slice(0, 2000);
+
+      const rawAttachmentUrl = (data as any).attachmentUrl;
+      const rawAttachmentType = (data as any).attachmentType;
+      const hasAttachment =
+        typeof rawAttachmentUrl === "string" &&
+        rawAttachmentUrl.length > 0 &&
+        ALLOWED_ATTACHMENT_TYPES.includes(rawAttachmentType);
+
+      // Mensagem precisa ter TEXTO ou ANEXO — as duas vazias não é uma
+      // mensagem de verdade.
+      if (!text && !hasAttachment) return;
 
       const message: ChatMessage = {
         id: randomUUID(),
         username,
         text,
         timestamp: Date.now(),
+        attachmentUrl: hasAttachment ? rawAttachmentUrl : null,
+        attachmentType: hasAttachment ? (rawAttachmentType as AttachmentType) : null,
+        attachmentName:
+          hasAttachment && typeof (data as any).attachmentName === "string"
+            ? (data as any).attachmentName.slice(0, 200)
+            : null,
       };
 
-      insertStmt.run(message.id, message.username, message.text, message.timestamp);
+      insertStmt.run(
+        message.id,
+        message.username,
+        message.text,
+        message.timestamp,
+        message.attachmentUrl ?? null,
+        message.attachmentType ?? null,
+        message.attachmentName ?? null
+      );
       pruneStmt.run(HISTORY_CAP);
 
       const payload = JSON.stringify({ type: "message", message });

@@ -28,6 +28,18 @@ db.exec(`
   );
 `);
 
+// Migração leve: adiciona as colunas de anexo (imagem/áudio/gif) em bancos
+// já existentes, criados antes dessa feature. SQLite não tem "ADD COLUMN
+// IF NOT EXISTS" — tenta adicionar e ignora o erro se a coluna já existir
+// (banco criado numa versão mais nova, já com elas desde o início).
+for (const columnDef of ["attachment_url TEXT", "attachment_type TEXT", "attachment_name TEXT"]) {
+  try {
+    db.exec(`ALTER TABLE messages ADD COLUMN ${columnDef}`);
+  } catch {
+    // já existe, segue o jogo
+  }
+}
+
 // Soundboard: cada som é um arquivo em backend/data/sounds/ + esta linha
 // com os metadados. Sem limite de quantidade nem de duração — só um teto
 // de tamanho de arquivo por segurança (ver MAX_SOUND_BYTES em sounds.ts).
