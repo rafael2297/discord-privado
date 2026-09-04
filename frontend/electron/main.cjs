@@ -41,7 +41,7 @@ function createWindow() {
     height: 750,
     minWidth: 800,
     minHeight: 500,
-    title: "Discord Privado",
+    title: "Murmity",
     icon: path.join(__dirname, "..", "build-icons", "icon.png"),
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
@@ -124,7 +124,7 @@ ipcMain.handle("list-network-interfaces", () => {
 // chave fixa pra todo mundo que hospedar — ok pro estágio atual.
 const DEFAULT_BACKEND_ENV = {
   PORT: "3000",
-  JWT_SECRET: "discord-privado-chave-padrao-troque-se-for-expor-publicamente",
+  JWT_SECRET: "murmity-chave-padrao-troque-se-for-expor-publicamente",
   LIVEKIT_API_KEY: "devkey",
   LIVEKIT_API_SECRET: "secret",
 };
@@ -135,7 +135,7 @@ ipcMain.handle("start-backend", async (_event, envOverrides = {}) => {
     backendProcess = null;
   }
 
-  const exeName = process.platform === "win32" ? "discord-privado-backend.exe" : "discord-privado-backend";
+  const exeName = process.platform === "win32" ? "murmity-backend.exe" : "murmity-backend";
   const exePath = getResourcePath(exeName);
 
   backendProcess = spawn(exePath, [], {

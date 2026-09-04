@@ -1,4 +1,4 @@
-# Discord Privado — Guia de desenvolvimento
+# Murmity — Guia de desenvolvimento
 
 > Este arquivo é o antigo conteúdo do `README.md`, voltado pra quem vai
 > mexer no código-fonte (rodar com `npm install`/`npm run dev`, builds,
@@ -91,7 +91,7 @@ cd ..\frontend
 .\prepare-resources.bat
 ```
 
-Isso copia `discord-privado-backend.exe` (compilado) e `livekit-server.exe`
+Isso copia `murmity-backend.exe` (compilado) e `livekit-server.exe`
 (baixado antes na raiz do projeto) pra dentro de `frontend/resources/`.
 
 ### Testar localmente (sem publicar nada ainda)
@@ -150,7 +150,7 @@ do GitHub e rode. Depois disso, as próximas atualizações são automáticas.
 Objetivo final (seção 13 do `PROJECT_CONTEXT.md`): quem for **hospedar** o
 servidor não deve precisar instalar Node.js, npm, nem Docker — só abrir o
 app. Este é o primeiro passo pra isso: compilar o backend inteiro num
-único `discord-privado-backend.exe`, usando o recurso oficial "Single
+único `murmity-backend.exe`, usando o recurso oficial "Single
 Executable Applications" do próprio Node.js (não usamos `pkg`, que está
 sem manutenção).
 
@@ -168,7 +168,7 @@ npm install
 npm run build:exe
 ```
 
-Isso gera `backend/build/discord-privado-backend.exe`. **Validado
+Isso gera `backend/build/murmity-backend.exe`. **Validado
 funcionando** — já testado com sucesso pelo usuário.
 
 ## Etapa 7.2 — Hospedar com um clique (Electron + detecção de rede)

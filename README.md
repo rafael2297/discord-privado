@@ -1,4 +1,4 @@
-# Discord Privado
+# Murmity
 
 Um app de chat + chamada de voz/vídeo + compartilhamento de tela, do
 jeitinho do Discord, mas privado — feito pra um grupo pequeno de amigos
@@ -34,7 +34,7 @@ Não tem cadastro nem senha: você só digita um nome pra entrar.
 3. Rode o instalador — é um instalador comum do Windows (NSIS), como
    qualquer outro programa. Não pede nada estranho, não precisa instalar
    Node.js, Docker ou qualquer outra coisa.
-4. Abra o **Discord Privado** pelo atalho criado.
+4. Abra o **Murmity** pelo atalho criado.
 
 > Hoje o instalador só existe para **Windows**. Mac e Linux ainda não são
 > empacotados.
@@ -87,7 +87,7 @@ Se todo mundo está na mesma casa/Wi-Fi, a opção **"Rede local"** dentro de
 
 Se seus amigos estão em **outras casas/redes**, vocês precisam de um app
 que simule uma rede local entre os PCs pela internet (uma "VPN de LAN").
-O Discord Privado detecta essas redes automaticamente e mostra elas na
+O Murmity detecta essas redes automaticamente e mostra elas na
 lista de "Hospedar servidor" assim que estiverem ativas — não precisa
 configurar nada dentro do app além de escolher a rede certa.
 
@@ -101,7 +101,7 @@ configurar nada dentro do app além de escolher a rede certa.
    (`zerotier-cli join <ID_DA_REDE>`, ou pela interface gráfica do app).
 4. No painel do ZeroTier, **autorize** cada PC que entrar na rede (tem uma
    caixinha de "Auth" pra marcar — por padrão, PCs novos ficam pendentes).
-5. Agora, na hora de **"Hospedar servidor"** no Discord Privado, a rede do
+5. Agora, na hora de **"Hospedar servidor"** no Murmity, a rede do
    ZeroTier deve aparecer na lista de redes disponíveis — escolha ela.
    O endereço que o app vai gerar pra compartilhar já vai usar o IP do
    ZeroTier automaticamente.
@@ -109,7 +109,7 @@ configurar nada dentro do app além de escolher a rede certa.
    escolhem "Entrar em servidor" e colam esse endereço.
 
 Outras opções que também funcionam, pelo mesmo princípio (todo mundo
-entra na mesma "rede virtual" antes de abrir o Discord Privado):
+entra na mesma "rede virtual" antes de abrir o Murmity):
 
 - **[Hamachi](https://www.vpn.net/)** (LogMeIn Hamachi)
 - **[Radmin VPN](https://www.radmin-vpn.com/)**

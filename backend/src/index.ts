@@ -8,6 +8,7 @@ import roomsRouter from "./rooms";
 import soundsRouter, { SOUNDS_DIR } from "./sounds";
 import emojisRouter, { EMOJIS_DIR } from "./emojis";
 import attachmentsRouter, { ATTACHMENTS_DIR } from "./attachments";
+import linkPreviewRouter from "./linkpreview";
 import { setupChat } from "./chat";
 
 const app = express();
@@ -31,6 +32,7 @@ app.use("/emojis/files", express.static(EMOJIS_DIR));
 app.use("/emojis", emojisRouter);
 app.use("/attachments/files", express.static(ATTACHMENTS_DIR));
 app.use("/attachments", attachmentsRouter);
+app.use("/link-preview", linkPreviewRouter);
 
 // WebSocket precisa de um servidor HTTP explícito (não dá pra usar
 // app.listen direto quando também tem WS na mesma porta).

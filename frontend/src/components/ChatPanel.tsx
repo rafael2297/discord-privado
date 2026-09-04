@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Smile, Paperclip, Image as ImageIcon, X } from "lucide-react";
 import { useChatConnection, ChatAttachment } from "../ChatConnectionContext";
-import { fetchEmojis, uploadAttachment, CustomEmoji } from "../api";
-import { renderMessageText, buildEmojiUrlMap } from "../emojiText";
+import { fetchEmojis, uploadAttachment, fetchLinkPreview, CustomEmoji, LinkPreview } from "../api";
+import { renderMessageContent, buildEmojiUrlMap } from "../emojiText";
+import { extractFirstYoutubeUrl } from "../youtube";
 import EmojiPicker from "./EmojiPicker";
 import GifPicker from "./GifPicker";
+import YoutubeEmbed from "./YoutubeEmbed";
 
 interface Props {
   username: string;
@@ -29,6 +31,8 @@ export default function ChatPanel({ username, backendUrl, authToken }: Props) {
   const [pendingAttachment, setPendingAttachment] = useState<ChatAttachment | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [linkPreviews, setLinkPreviews] = useState<Map<string, LinkPreview>>(new Map());
+  const fetchedUrlsRef = useRef<Set<string>>(new Set());
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -57,6 +61,20 @@ export default function ChatPanel({ username, backendUrl, authToken }: Props) {
       cancelled = true;
     };
   }, [backendUrl, authToken]);
+
+  // Sempre que uma mensagem nova tem um link de YouTube, busca o preview
+  // dele (uma vez só por URL, mesmo que apareça em várias mensagens).
+  useEffect(() => {
+    for (const m of messages) {
+      const youtubeUrl = extractFirstYoutubeUrl(m.text);
+      if (!youtubeUrl || fetchedUrlsRef.current.has(youtubeUrl)) continue;
+      fetchedUrlsRef.current.add(youtubeUrl);
+      fetchLinkPreview(backendUrl, authToken, youtubeUrl).then((preview) => {
+        if (!preview) return; // sem preview disponível — o link continua clicável normal
+        setLinkPreviews((prev) => new Map(prev).set(youtubeUrl, preview));
+      });
+    }
+  }, [messages, backendUrl, authToken]);
 
   const emojiByCode = buildEmojiUrlMap(backendUrl, customEmojis);
 
@@ -108,11 +126,7 @@ export default function ChatPanel({ username, backendUrl, authToken }: Props) {
     sendMessage("", { url: gif.url, type: "gif" });
   }
 
-  async function handleFilePicked(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = ""; // permite escolher o mesmo arquivo de novo depois
-    if (!file) return;
-
+  async function uploadPickedFile(file: File) {
     const kind = file.type.startsWith("audio/") ? "audio" : "image";
     setUploading(true);
     setUploadError(null);
@@ -124,6 +138,30 @@ export default function ChatPanel({ username, backendUrl, authToken }: Props) {
     } finally {
       setUploading(false);
     }
+  }
+
+  async function handleFilePicked(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // permite escolher o mesmo arquivo de novo depois
+    if (!file) return;
+    await uploadPickedFile(file);
+  }
+
+  // Ctrl+V com uma imagem copiada (ex: print de tela) sobe ela igual ao
+  // botão de anexo — sem isso, colar uma imagem no campo de texto não
+  // fazia nada.
+  async function handlePaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of Array.from(items)) {
+      if (item.kind === "file" && item.type.startsWith("image/")) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file) await uploadPickedFile(file);
+        return;
+      }
+    }
+    // Nada de imagem no clipboard — deixa o paste de texto normal acontecer.
   }
 
   return (
@@ -138,6 +176,9 @@ export default function ChatPanel({ username, backendUrl, authToken }: Props) {
             m.timestamp - prev.timestamp < GROUP_WINDOW_MS &&
             !prev.attachmentUrl &&
             !m.attachmentUrl;
+
+          const youtubeUrl = m.text ? extractFirstYoutubeUrl(m.text) : null;
+          const youtubePreview = youtubeUrl ? linkPreviews.get(youtubeUrl) : undefined;
 
           return (
             <div key={m.id} className={`chat-message-row ${grouped ? "grouped" : ""}`}>
@@ -157,9 +198,12 @@ export default function ChatPanel({ username, backendUrl, authToken }: Props) {
                 )}
                 {m.text && (
                   <div className="chat-text-row">
-                    <span className="chat-text">{renderMessageText(m.text, emojiByCode)}</span>
+                    <span className="chat-text">{renderMessageContent(m.text, emojiByCode)}</span>
                     {grouped && <span className="chat-timestamp-hover">{formatTime(m.timestamp)}</span>}
                   </div>
+                )}
+                {youtubeUrl && youtubePreview && (
+                  <YoutubeEmbed preview={youtubePreview} sourceUrl={youtubeUrl} />
                 )}
                 {m.attachmentUrl && m.attachmentType === "audio" ? (
                   <audio
@@ -233,6 +277,7 @@ export default function ChatPanel({ username, backendUrl, authToken }: Props) {
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
           placeholder={connected ? "Mensagem para #geral" : "Reconectando ao chat..."}
           rows={1}
         />

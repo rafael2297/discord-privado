@@ -59,7 +59,7 @@ export default function App() {
         <div className="app-shell">
           <UpdateBanner />
           <header>
-            <h1>🎧 Discord Privado</h1>
+            <h1>🎧 Murmity</h1>
           </header>
           <main>
             {screen === "start" ? (

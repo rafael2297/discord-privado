@@ -63,7 +63,7 @@ export default function StartScreen({ onHostReady, onJoinExisting }: Props) {
 
   return (
     <div className="start-screen">
-      <h2>Discord Privado</h2>
+      <h2>Murmity</h2>
 
       {step === "choose" && (
         <>

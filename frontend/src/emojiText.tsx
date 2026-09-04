@@ -15,7 +15,8 @@ const CODE_REGEX = /:([a-z0-9_]{2,32}):/g;
  */
 export function renderMessageText(
   text: string,
-  emojiByCode: Map<string, { url: string }>
+  emojiByCode: Map<string, { url: string }>,
+  keyPrefix = ""
 ): ReactNode[] {
   const parts: ReactNode[] = [];
   let lastIndex = 0;
@@ -32,7 +33,13 @@ export function renderMessageText(
       parts.push(text.slice(lastIndex, match.index));
     }
     parts.push(
-      <img key={`emoji-${key++}`} className="chat-emoji" src={emoji.url} alt={full} title={full} />
+      <img
+        key={`${keyPrefix}emoji-${key++}`}
+        className="chat-emoji"
+        src={emoji.url}
+        alt={full}
+        title={full}
+      />
     );
     lastIndex = match.index + full.length;
   }
@@ -53,4 +60,43 @@ export function buildEmojiUrlMap(
     map.set(emoji.code, { url: `${backendUrl}${emoji.url}` });
   }
   return map;
+}
+
+const URL_SPLIT_REGEX = /(https?:\/\/[^\s]+)/g;
+// Pontuação comum que costuma vir GRUDADA no fim de um link dentro de uma
+// frase (ex: "olha isso: https://x.com.") mas não faz parte da URL.
+const TRAILING_PUNCTUATION_REGEX = /[).,!?;:]+$/;
+
+/**
+ * Mesma coisa que `renderMessageText`, mas também reconhece URLs
+ * (http/https) no meio do texto e transforma em link clicável. Emoji
+ * personalizado dentro dos trechos de texto continua funcionando normal.
+ */
+export function renderMessageContent(
+  text: string,
+  emojiByCode: Map<string, { url: string }>
+): ReactNode[] {
+  const segments = text.split(URL_SPLIT_REGEX);
+  const nodes: ReactNode[] = [];
+
+  segments.forEach((segment, i) => {
+    if (!segment) return;
+
+    if (/^https?:\/\//.test(segment)) {
+      const trailingMatch = segment.match(TRAILING_PUNCTUATION_REGEX);
+      const trailing = trailingMatch ? trailingMatch[0] : "";
+      const url = trailing ? segment.slice(0, -trailing.length) : segment;
+
+      nodes.push(
+        <a key={`link-${i}`} href={url} target="_blank" rel="noreferrer" className="chat-link">
+          {url}
+        </a>
+      );
+      if (trailing) nodes.push(trailing);
+    } else {
+      nodes.push(...renderMessageText(segment, emojiByCode, `seg${i}-`));
+    }
+  });
+
+  return nodes;
 }

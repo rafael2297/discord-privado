@@ -48,6 +48,14 @@ export interface UploadedAttachment {
   name: string;
 }
 
+export interface LinkPreview {
+  type: "youtube";
+  videoId: string;
+  title: string;
+  authorName: string;
+  thumbnailUrl: string;
+}
+
 export async function fetchVoiceParticipants(
   backendUrl: string,
   authToken: string,
@@ -224,4 +232,26 @@ export async function uploadAttachment(
     body: file,
   });
   return parseJsonOrThrow(res);
+}
+
+/**
+ * Busca o preview de um link (hoje só funciona pra YouTube). Retorna
+ * `null` em vez de lançar erro quando não tem preview disponível pra
+ * esse link — nesses casos o link continua funcionando normal, só sem
+ * card, então não faz sentido tratar isso como uma falha de verdade.
+ */
+export async function fetchLinkPreview(
+  backendUrl: string,
+  authToken: string,
+  url: string
+): Promise<LinkPreview | null> {
+  try {
+    const res = await fetch(`${backendUrl}/link-preview?url=${encodeURIComponent(url)}`, {
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
 }

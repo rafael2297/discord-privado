@@ -45,7 +45,7 @@ export default function ChannelSidebar({
 
   return (
     <div className="channel-sidebar">
-      <div className="channel-sidebar-header">Discord Privado</div>
+      <div className="channel-sidebar-header">Murmity</div>
 
       <div className="channel-list">
         <div className="channel-category">Canais de texto</div>

@@ -16,10 +16,10 @@ $ErrorActionPreference = "Stop"
 
 New-Item -ItemType Directory -Force -Path "resources" | Out-Null
 
-$backendExe = "..\backend\build\discord-privado-backend.exe"
+$backendExe = "..\backend\build\murmity-backend.exe"
 if (Test-Path $backendExe) {
-    Copy-Item $backendExe "resources\discord-privado-backend.exe" -Force
-    Write-Host "Copiado: resources\discord-privado-backend.exe" -ForegroundColor Green
+    Copy-Item $backendExe "resources\murmity-backend.exe" -Force
+    Write-Host "Copiado: resources\murmity-backend.exe" -ForegroundColor Green
 } else {
     Write-Host "AVISO: $backendExe não encontrado (rode 'npm run build:exe' dentro de backend/ primeiro)." -ForegroundColor Yellow
 }

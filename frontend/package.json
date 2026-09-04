@@ -1,12 +1,12 @@
 {
-  "name": "discord-privado-frontend",
+  "name": "murmity-frontend",
   "private": true,
-  "version": "0.1.3",
+  "version": "0.1.5",
   "type": "module",
   "main": "electron/main.cjs",
   "repository": {
     "type": "git",
-    "url": "https://github.com/rafael2297/discord-privado.git"
+    "url": "https://github.com/rafael2297/murmity.git"
   },
   "scripts": {
     "dev": "vite",
@@ -40,8 +40,8 @@
     "wait-on": "^8.0.1"
   },
   "build": {
-    "appId": "com.discordprivado.app",
-    "productName": "Discord Privado",
+    "appId": "com.murmity.app",
+    "productName": "Murmity",
     "directories": {
       "output": "release"
     },
@@ -51,8 +51,8 @@
     ],
     "extraResources": [
       {
-        "from": "resources/discord-privado-backend.exe",
-        "to": "discord-privado-backend.exe"
+        "from": "resources/murmity-backend.exe",
+        "to": "murmity-backend.exe"
       },
       {
         "from": "resources/livekit-server.exe",
@@ -81,7 +81,7 @@
       {
         "provider": "github",
         "owner": "rafael2297",
-        "repo": "discord-privado",
+        "repo": "murmity",
         "releaseType": "release"
       }
     ]
